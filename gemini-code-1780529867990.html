@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>نظام إدارة الطلبيات</title>
+    <title>نظام إدارة الفروع والطلبيات</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -12,16 +12,23 @@
         body { font-family: 'Tajawal', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
         .hidden-view { display: none !important; }
         
+        /* حركات القوائم المنسدلة */
         details > summary { list-style: none; cursor: pointer; }
         details > summary::-webkit-details-marker { display: none; }
         details[open] summary ~ * { animation: slideDown 0.2s ease-in-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .mobile-touch-target { min-height: 44px; min-width: 44px; }
-        .fast-click:active { transform: scale(0.97); transition: transform 0.1s; }
+        /* تحسينات الهواتف المحمولة */
+        .mobile-touch-target { min-height: 48px; min-width: 48px; }
+        .fast-click:active { transform: scale(0.96); transition: transform 0.1s; }
         
+        /* تخطيط لوحة الإدارة */
         .admin-layout { display: flex; flex-direction: column; min-height: 100vh; }
         @media (min-width: 768px) { .admin-layout { flex-direction: row; } }
+        
+        /* شريط التمرير المخفي للهواتف */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="text-gray-800 relative">
@@ -29,8 +36,8 @@
     <div id="login-view" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-blue-600">
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-gray-800 mb-2">نظام إدارة الفروع</h2>
-                <p class="text-gray-500">سجل الدخول للمتابعة</p>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">نظام الطلبيات الموحد</h2>
+                <p class="text-gray-500">سجل الدخول للوصول إلى لوحة التحكم</p>
             </div>
             <input type="email" id="email" placeholder="البريد الإلكتروني" class="w-full mb-4 p-4 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-lg" autocomplete="email">
             <input type="password" id="password" placeholder="كلمة المرور" class="w-full mb-6 p-4 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-lg" autocomplete="current-password">
@@ -42,54 +49,63 @@
         <div class="max-w-3xl mx-auto">
             <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl shadow-sm sticky top-2 z-40 border border-gray-100">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">لوحة المشرف</h2>
+                    <h2 class="text-xl font-bold text-gray-800">طلب بضاعة جديدة</h2>
                     <p id="branch-name-display" class="text-blue-600 font-bold text-sm mt-1"></p>
                 </div>
-                <button class="logout-btn bg-red-50 text-red-600 px-4 py-2 rounded-lg font-bold hover:bg-red-100 transition mobile-touch-target fast-click">خروج</button>
+                <button class="logout-btn bg-red-50 text-red-600 px-5 py-2 rounded-lg font-bold hover:bg-red-100 transition mobile-touch-target fast-click">خروج</button>
             </div>
 
             <div id="products-list-supervisor" class="space-y-4">
                 </div>
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] z-50 flex justify-center pb-safe">
-            <button id="submit-order-btn" class="w-full max-w-3xl bg-green-600 text-white p-4 rounded-xl text-lg font-bold hover:bg-green-700 transition fast-click flex justify-center items-center gap-2 shadow-lg mobile-touch-target">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-15px_30px_rgba(0,0,0,0.08)] z-50 flex justify-center pb-safe">
+            <button id="submit-order-btn" class="w-full max-w-3xl bg-green-600 text-white p-4 rounded-xl text-xl font-bold hover:bg-green-700 transition fast-click flex justify-center items-center gap-3 shadow-lg mobile-touch-target">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                 <span id="order-btn-text">إرسال الطلبية للرئيسي</span>
             </button>
         </div>
     </div>
 
-    <div id="admin-view" class="hidden-view admin-layout bg-gray-100">
+    <div id="admin-view" class="hidden-view admin-layout bg-gray-50">
         
-        <aside class="w-full md:w-64 bg-white shadow-lg md:min-h-screen flex flex-col z-20">
-            <div class="p-6 border-b border-gray-100 flex justify-between items-center md:block">
-                <h2 class="text-2xl font-bold text-blue-700">الإدارة المركزية</h2>
+        <aside class="w-full md:w-64 bg-white shadow-lg md:min-h-screen flex flex-col z-20 border-l border-gray-200">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center md:block bg-blue-600 md:bg-white">
+                <h2 class="text-xl md:text-2xl font-bold text-white md:text-blue-700">الإدارة المركزية</h2>
+                <button class="logout-btn md:hidden text-white font-bold bg-blue-700 px-3 py-1 rounded">خروج</button>
             </div>
-            <nav class="flex-1 p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible">
-                <button onclick="switchAdminTab('tab-today')" id="btn-tab-today" class="admin-tab-btn flex-shrink-0 w-full text-right p-3 rounded-xl font-bold bg-blue-50 text-blue-700 transition flex items-center gap-2">طلبيات اليوم المباشرة</button>
-                <button onclick="switchAdminTab('tab-archive')" id="btn-tab-archive" class="admin-tab-btn flex-shrink-0 w-full text-right p-3 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">أرشيف الطلبيات</button>
-                <button onclick="switchAdminTab('tab-products')" id="btn-tab-products" class="admin-tab-btn flex-shrink-0 w-full text-right p-3 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2">إدارة المنتجات</button>
+            <nav class="flex-1 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto hide-scrollbar">
+                <button onclick="switchAdminTab('tab-today')" id="btn-tab-today" class="admin-tab-btn flex-shrink-0 text-right p-3 md:p-4 rounded-xl font-bold bg-blue-50 text-blue-700 transition flex items-center gap-2 border border-blue-100 shadow-sm whitespace-nowrap">
+                    📦 طلبيات اليوم
+                </button>
+                <button onclick="switchAdminTab('tab-archive')" id="btn-tab-archive" class="admin-tab-btn flex-shrink-0 text-right p-3 md:p-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2 whitespace-nowrap">
+                    🗃️ أرشيف الطلبيات
+                </button>
+                <button onclick="switchAdminTab('tab-products')" id="btn-tab-products" class="admin-tab-btn flex-shrink-0 text-right p-3 md:p-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2 whitespace-nowrap">
+                    🛒 إدارة المنتجات
+                </button>
             </nav>
             <div class="p-4 border-t border-gray-100 hidden md:block">
-                <button class="logout-btn w-full bg-red-50 text-red-600 p-3 rounded-xl font-bold hover:bg-red-100 transition fast-click">تسجيل الخروج</button>
+                <button class="logout-btn w-full bg-red-50 text-red-600 p-3 rounded-xl font-bold hover:bg-red-100 transition fast-click flex justify-center items-center gap-2">
+                    تسجيل الخروج
+                </button>
             </div>
         </aside>
 
-        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto w-full">
             
             <div id="tab-today" class="admin-tab-content block">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <h3 class="text-2xl font-bold text-gray-800">طلبيات اليوم</h3>
+                    <h3 class="text-2xl font-bold text-gray-800">طلبيات اليوم المباشرة</h3>
                     <div class="flex gap-2 w-full md:w-auto">
-                        <button onclick="exportSpecificBranch('today')" class="flex-1 md:flex-none bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg font-bold hover:bg-indigo-200 transition text-sm">تقرير فرع محدد</button>
-                        <button onclick="exportAllOrders('today')" class="flex-1 md:flex-none bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 transition shadow text-sm">تنزيل الكل (اليوم)</button>
+                        <button onclick="exportSpecificBranch('today')" class="flex-1 bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg font-bold hover:bg-indigo-200 transition text-sm flex justify-center items-center gap-1 shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg> تقرير فرع</button>
+                        <button onclick="exportAllOrders('today')" class="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 transition shadow text-sm flex justify-center items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> التقرير المجمع</button>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full table-auto">
-                            <thead class="bg-gray-50 text-gray-600 text-sm">
+                            <thead class="bg-gray-100 text-gray-700 text-sm">
                                 <tr><th class="px-4 py-3 text-right">الفرع</th><th class="px-4 py-3 text-right">الوقت</th><th class="px-4 py-3 text-right">الإجمالي</th><th class="px-4 py-3 text-center">الإجراءات</th></tr>
                             </thead>
                             <tbody id="today-orders-tbody" class="divide-y divide-gray-100"></tbody>
@@ -102,14 +118,14 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <h3 class="text-2xl font-bold text-gray-800">أرشيف الطلبيات السابقة</h3>
                     <div class="flex gap-2 w-full md:w-auto">
-                        <button onclick="exportSpecificBranch('archive')" class="flex-1 md:flex-none bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg font-bold hover:bg-indigo-200 transition text-sm">أرشيف فرع</button>
-                        <button onclick="exportAllOrders('archive')" class="flex-1 md:flex-none bg-gray-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-gray-700 transition shadow text-sm">تنزيل الأرشيف بالكامل</button>
+                        <button onclick="exportSpecificBranch('archive')" class="flex-1 bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg font-bold hover:bg-indigo-200 transition text-sm shadow-sm">أرشيف فرع</button>
+                        <button onclick="exportAllOrders('archive')" class="flex-1 bg-gray-700 text-white px-4 py-2 rounded-lg font-bold hover:bg-gray-800 transition shadow text-sm">تنزيل كل الأرشيف</button>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full table-auto">
-                            <thead class="bg-gray-50 text-gray-600 text-sm">
+                            <thead class="bg-gray-100 text-gray-700 text-sm">
                                 <tr><th class="px-4 py-3 text-right">الفرع</th><th class="px-4 py-3 text-right">التاريخ والوقت</th><th class="px-4 py-3 text-right">الإجمالي</th><th class="px-4 py-3 text-center">الإجراءات</th></tr>
                             </thead>
                             <tbody id="archive-orders-tbody" class="divide-y divide-gray-100"></tbody>
@@ -119,22 +135,25 @@
             </div>
 
             <div id="tab-products" class="admin-tab-content hidden">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-                    <h3 class="font-bold text-lg mb-4 text-gray-700 border-b pb-2">استيراد منتجات من إكسل</h3>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+                    <h3 class="font-bold text-lg mb-4 text-gray-800 border-b border-gray-100 pb-3 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        استيراد منتجات من إكسل
+                    </h3>
                     <div class="flex flex-col md:flex-row items-center gap-4">
-                        <input type="file" id="excel-import" accept=".xlsx, .xls" class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition cursor-pointer">
-                        <button id="import-btn" class="w-full md:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition whitespace-nowrap shadow-sm fast-click">رفع البيانات</button>
+                        <input type="file" id="excel-import" accept=".xlsx, .xls" class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-5 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition cursor-pointer border border-gray-200">
+                        <button id="import-btn" class="w-full md:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition whitespace-nowrap shadow-md fast-click">تحديث القاعدة</button>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700">المنتجات الحالية (قابلة للتعديل)</h3>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-4 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800">قائمة المنتجات في النظام (تعديل كامل)</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full table-auto">
-                            <thead class="bg-gray-100 text-gray-600 text-sm">
-                                <tr><th class="px-4 py-3 text-right">الاسم</th><th class="px-4 py-3 text-right">التصنيف</th><th class="px-4 py-3 text-right">السعر</th><th class="px-4 py-3 text-right">الضريبة</th><th class="px-4 py-3 text-center">الإجراء</th></tr>
+                            <thead class="bg-gray-50 text-gray-600 text-sm">
+                                <tr><th class="px-4 py-3 text-right">الاسم</th><th class="px-4 py-3 text-right">المجموعة / التصنيف</th><th class="px-4 py-3 text-right">السعر</th><th class="px-4 py-3 text-right">الضريبة</th><th class="px-4 py-3 text-center">الإجراء</th></tr>
                             </thead>
                             <tbody id="admin-products-tbody" class="divide-y divide-gray-100"></tbody>
                         </table>
@@ -148,9 +167,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        // تم إضافة onSnapshot لجلب البيانات بالوقت الفعلي، وتم إزالة orderBy لتجنب أخطاء الفهارس
-        import { getFirestore, doc, getDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+        // إعدادات فايربيس الخاصة بك
         const firebaseConfig = {
             apiKey: "AIzaSyBkuTC4Z4j0r0JEDatdEVOwV3-7ypQVE-A",
             authDomain: "branches-orders.firebaseapp.com",
@@ -169,13 +188,15 @@
         let globalProducts = [];
         let allOrders = { today: [], archive: [] };
 
-        // دالة موثوقة للحصول على تاريخ اليوم للمقارنة والأرشفة
+        // دالة موثوقة للحصول على تاريخ اليوم بشكل نصي ثابت للفلترة (مثال: "2023-10-25")
         const getTodayString = () => {
             const today = new Date();
             return `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
         };
 
-        // التنقل بين الشاشات
+        // ==========================================
+        // التنقل بين الشاشات والتبويبات
+        // ==========================================
         function showView(viewId) {
             ['login-view', 'supervisor-view', 'admin-view'].forEach(id => document.getElementById(id).classList.add('hidden-view'));
             document.getElementById(viewId).classList.remove('hidden-view');
@@ -186,19 +207,21 @@
             document.getElementById(tabId).classList.remove('hidden');
             
             document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-50', 'text-blue-700');
+                btn.classList.remove('bg-blue-50', 'text-blue-700', 'border', 'border-blue-100', 'shadow-sm');
                 btn.classList.add('text-gray-600');
             });
             const activeBtn = document.getElementById('btn-' + tabId);
             activeBtn.classList.remove('text-gray-600');
-            activeBtn.classList.add('bg-blue-50', 'text-blue-700');
+            activeBtn.classList.add('bg-blue-50', 'text-blue-700', 'border', 'border-blue-100', 'shadow-sm');
         };
 
-        // تسجيل الدخول
+        // ==========================================
+        // نظام تسجيل الدخول (Authentication)
+        // ==========================================
         document.getElementById('login-btn').addEventListener('click', async () => {
             const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value.trim();
-            if(!email || !pass) return Swal.fire('تنبيه', 'أدخل البيانات', 'warning');
+            if(!email || !pass) return Swal.fire('تنبيه', 'الرجاء إدخال البريد وكلمة المرور', 'warning');
             
             const btn = document.getElementById('login-btn');
             btn.innerHTML = 'جاري التحقق...';
@@ -207,7 +230,7 @@
                 await signInWithEmailAndPassword(auth, email, pass); 
             } catch (error) { 
                 console.error(error);
-                Swal.fire('خطأ', 'بيانات الدخول غير صحيحة، تأكد من الإيميل وكلمة المرور', 'error'); 
+                Swal.fire('خطأ', 'بيانات الدخول غير صحيحة', 'error'); 
             }
             btn.innerHTML = 'تسجيل الدخول';
             btn.disabled = false;
@@ -223,19 +246,18 @@
                         currentUserData = userDoc.data();
                         if (currentUserData.role === 'admin') {
                             showView('admin-view');
-                            loadAdminData(); // جلب بالوقت الفعلي
+                            loadAdminData(); 
                         } else {
                             showView('supervisor-view');
-                            document.getElementById('branch-name-display').innerText = `فرع: ${currentUserData.branch}`;
+                            document.getElementById('branch-name-display').innerText = `الفرع الحالي: ${currentUserData.branch}`;
                             loadSupervisorProducts();
                         }
                     } else {
-                        Swal.fire('خطأ', 'هذا الحساب لا يملك صلاحيات للوصول', 'error');
+                        Swal.fire('تنبيه', 'حسابك مسجل ولكن لا تملك صلاحيات معينة في قاعدة البيانات.', 'error');
                         signOut(auth);
                     }
                 } catch (err) {
-                    console.error(err);
-                    Swal.fire('خطأ', 'فشل في قراءة الصلاحيات من قاعدة البيانات (راجع الـ Rules)', 'error');
+                    Swal.fire('خطأ', 'مشكلة في قراءة الصلاحيات', 'error');
                 }
             } else {
                 showView('login-view');
@@ -243,7 +265,7 @@
         });
 
         // ==========================================
-        // المشرف: قائمة المنتجات والإرسال
+        // واجهة المشرف: المنتجات وإرسال الطلبية
         // ==========================================
         async function loadSupervisorProducts() {
             try {
@@ -263,28 +285,28 @@
                 container.innerHTML = '';
 
                 if (globalProducts.length === 0) {
-                    container.innerHTML = '<div class="text-center p-6 text-gray-500">لا يوجد منتجات متاحة حالياً، يرجى مراجعة الإدارة.</div>';
+                    container.innerHTML = '<div class="text-center p-8 text-gray-500 font-bold">لا يوجد بضاعة متاحة حالياً.</div>';
                     return;
                 }
 
                 for (const [catName, products] of Object.entries(categories)) {
                     const details = document.createElement('details');
-                    details.className = "bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden";
+                    details.className = "bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-3";
                     details.innerHTML = `
                         <summary class="p-4 font-bold text-lg bg-gray-50 text-gray-800 flex justify-between items-center select-none mobile-touch-target">
-                            ${catName} <span class="text-sm font-normal bg-white px-3 py-1 rounded-full text-blue-600 shadow-sm border">${products.length}</span>
+                            ${catName} <span class="text-sm font-normal bg-white px-3 py-1 rounded-full text-blue-700 shadow-sm border border-blue-100">${products.length}</span>
                         </summary>
-                        <div class="p-2 space-y-2 border-t">
+                        <div class="p-3 space-y-3 border-t bg-white">
                             ${products.map(p => `
-                                <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors">
+                                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
                                     <div class="w-1/2">
-                                        <p class="font-bold text-sm md:text-base text-gray-800">${p.name}</p>
+                                        <p class="font-bold text-base text-gray-800">${p.name}</p>
                                         <p class="text-xs text-gray-500 mt-1">${p.price} د.ا | ضريبة ${p.tax}%</p>
                                     </div>
-                                    <div class="flex items-center space-x-2 space-x-reverse bg-gray-50 rounded-lg p-1 border">
-                                        <button onclick="updateQty('${p.id}', 1)" class="bg-blue-600 text-white w-10 h-10 rounded-md font-bold text-xl fast-click hover:bg-blue-700">+</button>
-                                        <span id="qty-${p.id}" class="w-8 text-center font-bold text-lg text-gray-800">0</span>
-                                        <button onclick="updateQty('${p.id}', -1)" class="bg-red-500 text-white w-10 h-10 rounded-md font-bold text-xl fast-click hover:bg-red-600">-</button>
+                                    <div class="flex items-center space-x-2 space-x-reverse bg-gray-50 rounded-lg p-1 border border-gray-200">
+                                        <button onclick="updateQty('${p.id}', 1)" class="bg-blue-600 text-white w-12 h-10 rounded-md font-bold text-2xl fast-click hover:bg-blue-700 shadow-sm">+</button>
+                                        <span id="qty-${p.id}" class="w-8 text-center font-bold text-xl text-gray-800">0</span>
+                                        <button onclick="updateQty('${p.id}', -1)" class="bg-red-500 text-white w-12 h-10 rounded-md font-bold text-2xl fast-click hover:bg-red-600 shadow-sm">-</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -295,7 +317,7 @@
                 updateTotalBtnLabel();
             } catch (err) {
                 console.error(err);
-                Swal.fire('خطأ', 'فشل في تحميل قائمة المنتجات، يرجى تحديث الصفحة', 'error');
+                Swal.fire('خطأ', 'فشل في تحميل قائمة البضاعة', 'error');
             }
         }
 
@@ -311,12 +333,12 @@
         function updateTotalBtnLabel() {
             const totalQty = globalProducts.reduce((sum, p) => sum + p.quantity, 0);
             const btnText = document.getElementById('order-btn-text');
-            btnText.innerText = totalQty > 0 ? `إرسال الطلبية (${totalQty} عناصر)` : `إرسال الطلبية للرئيسي`;
+            btnText.innerText = totalQty > 0 ? `تأكيد وإرسال (${totalQty} أصناف)` : `إرسال الطلبية للرئيسي`;
         }
 
         document.getElementById('submit-order-btn').addEventListener('click', async () => {
             const orderedItems = globalProducts.filter(p => p.quantity > 0);
-            if (orderedItems.length === 0) return Swal.fire('تنبيه', 'الرجاء اختيار منتجات أولاً بزيادة العدد عن صفر', 'warning');
+            if (orderedItems.length === 0) return Swal.fire('تنبيه', 'قم بتحديد الكميات أولاً بالضغط على زر (+)', 'warning');
 
             const btn = document.getElementById('submit-order-btn');
             btn.disabled = true;
@@ -328,44 +350,44 @@
                 orderTotal += subT;
                 whatsappText += `▪️ ${item.name}: *${item.quantity}*\n`;
             });
-            whatsappText += `\n*الإجمالي:* ${orderTotal.toFixed(2)}`;
+            whatsappText += `\n*الإجمالي المتوقع:* ${orderTotal.toFixed(2)}`;
 
             try {
-                // حفظ في فايربيس
+                // حفظ الطلبية
                 await addDoc(collection(db, "orders"), {
                     branch: currentUserData.branch,
                     items: orderedItems,
                     total: orderTotal,
-                    dateStr: getTodayString(), // تم الاعتماد على هذه القيمة للفرز والأرشفة
-                    timestamp: serverTimestamp()
+                    dateStr: getTodayString(), 
+                    timestamp: serverTimestamp() // سيتم معالجتها بأمان في الإدارة
                 });
                 
-                // إعادة تعيين الواجهة
+                // التصفير
                 globalProducts.forEach(p => p.quantity = 0);
                 document.querySelectorAll('[id^="qty-"]').forEach(el => el.innerText = '0');
                 updateTotalBtnLabel();
                 
-                Swal.fire({icon: 'success', title: 'تم حفظ الطلبية', timer: 1500, showConfirmButton: false})
+                Swal.fire({icon: 'success', title: 'تم إرسال الطلبية بنجاح', text: 'جاري فتح الواتساب...', timer: 2000, showConfirmButton: false})
                 .then(() => {
                     const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
                     window.open(waLink, '_blank');
                 });
             } catch (error) {
                 console.error("Error saving order: ", error);
-                Swal.fire('خطأ', 'لم نتمكن من حفظ الطلبية في النظام، تحقق من الاتصال بالإنترنت', 'error');
+                Swal.fire('خطأ', 'مشكلة في الإرسال، تحقق من الإنترنت.', 'error');
             }
             btn.disabled = false;
         });
 
         // ==========================================
-        // الإدارة: الطلبات بالوقت الفعلي والمنتجات
+        // الإدارة المركزية (الطلبات والأرشيف)
         // ==========================================
         function loadAdminData() {
             loadAdminProducts(); 
             
             const ordersRef = collection(db, "orders");
             
-            // استخدام onSnapshot يضمن ظهور الطلبية فور إرسالها من المندوب
+            // الاستماع اللحظي للبيانات مع معالجة خطأ Null Timestamp الذي أدى لانهيار الموقع
             onSnapshot(ordersRef, (snap) => {
                 allOrders = { today: [], archive: [] };
                 const todayDateStr = getTodayString();
@@ -375,10 +397,11 @@
                     tempOrders.push({ id: doc.id, ...doc.data() });
                 });
 
-                // ترتيب زمني برمجياً (لتجنب الحاجة لفهرس فايربيس الذي قد يسبب خطأ)
+                // ترتيب زمني محلي لتجنب أخطاء الفهارس
                 tempOrders.sort((a, b) => {
-                    const timeA = a.timestamp ? a.timestamp.toMillis() : Date.now();
-                    const timeB = b.timestamp ? b.timestamp.toMillis() : Date.now();
+                    // إصلاح خطأ التوقف المفاجئ: التأكد من وجود timestamp و دالة toMillis
+                    const timeA = (a.timestamp && typeof a.timestamp.toMillis === 'function') ? a.timestamp.toMillis() : Date.now();
+                    const timeB = (b.timestamp && typeof b.timestamp.toMillis === 'function') ? b.timestamp.toMillis() : Date.now();
                     return timeB - timeA;
                 });
 
@@ -395,7 +418,6 @@
                 
             }, (error) => {
                 console.error("Realtime fetching error: ", error);
-                Swal.fire('تنبيه', 'حدثت مشكلة في المزامنة اللحظية مع قاعدة البيانات', 'error');
             });
         }
 
@@ -404,28 +426,33 @@
             tbody.innerHTML = '';
             
             if(ordersArray.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">لا يوجد طلبيات مسجلة هنا</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400 font-bold text-lg">لا يوجد بيانات مسجلة</td></tr>`;
                 return;
             }
 
             ordersArray.forEach(order => {
-                const dateStr = order.timestamp ? order.timestamp.toDate().toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) : 'الآن';
+                // استخراج التاريخ بأمان تام
+                let dateStr = 'الآن';
+                if (order.timestamp && typeof order.timestamp.toDate === 'function') {
+                    dateStr = order.timestamp.toDate().toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
+                }
                 
-                let waText = `*نسخة طلبية - ${order.branch}*\n`;
-                order.items.forEach(i => waText += `- ${i.name}: ${i.quantity}\n`);
-                waText += `الإجمالي: ${order.total.toFixed(2)}`;
+                // تجهيز رسالة الواتساب للإدارة
+                let waText = `*مراجعة طلبية - ${order.branch}*\nالتاريخ: ${dateStr}\n\n`;
+                order.items.forEach(i => waText += `▪️ ${i.name}: ${i.quantity}\n`);
+                waText += `\n*الإجمالي:* ${order.total.toFixed(2)}`;
                 const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
 
                 tbody.innerHTML += `
-                    <tr class="hover:bg-blue-50 transition border-b">
+                    <tr class="hover:bg-blue-50 transition border-b border-gray-100">
                         <td class="px-4 py-4 text-right font-bold text-gray-800">${order.branch}</td>
                         <td class="px-4 py-4 text-right text-gray-500 text-sm" dir="ltr">${dateStr}</td>
-                        <td class="px-4 py-4 text-right font-bold text-green-600">${order.total.toFixed(2)}</td>
+                        <td class="px-4 py-4 text-right font-bold text-green-600">${order.total.toFixed(2)} د.ا</td>
                         <td class="px-4 py-4 text-center flex justify-center gap-2">
-                            <button onclick="viewOrderDetails('${order.id}', '${source}')" class="bg-blue-100 text-blue-700 p-2 rounded-lg text-sm hover:bg-blue-200" title="تفاصيل وتحميل">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <button onclick="viewOrderDetails('${order.id}', '${source}')" class="bg-indigo-50 text-indigo-700 p-2 rounded-lg hover:bg-indigo-100 border border-indigo-100 transition shadow-sm" title="تفاصيل الطلبية">
+                                التفاصيل وتنزيل الإكسل
                             </button>
-                            <a href="${waLink}" target="_blank" class="bg-green-100 text-green-700 p-2 rounded-lg text-sm hover:bg-green-200" title="إرسال واتساب">
+                            <a href="${waLink}" target="_blank" class="bg-green-50 text-green-700 p-2 rounded-lg hover:bg-green-100 border border-green-100 transition shadow-sm flex items-center justify-center" title="إرسال عبر الواتساب">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.125-.397-.179-.974-.39-1.984-1.292-.958-.854-1.603-1.908-1.788-2.215-.187-.308-.02-.475.132-.627.138-.137.302-.352.453-.529.151-.176.201-.303.303-.505.101-.202.05-.38-.025-.531-.076-.151-.663-1.605-.909-2.197-.24-.577-.484-.499-.663-.508-.168-.009-.36-.011-.553-.011-.192 0-.505.072-.77.36-.264.288-1.01 .986-1.01 2.404s1.034 2.784 1.178 2.976c.144.192 2.029 3.097 4.914 4.341 2.409 1.036 3.256.973 3.844.872.646-.11 1.982-.808 2.261-1.589.28-.781.28-1.45.196-1.589-.084-.138-.302-.221-.604-.372z"></path></svg>
                             </a>
                         </td>
@@ -435,7 +462,7 @@
         }
 
         // ==========================================
-        // إدارة المنتجات والإكسل
+        // الإدارة: المنتجات (استيراد وتعديل)
         // ==========================================
         let adminProductsArray = [];
         async function loadAdminProducts() {
@@ -449,47 +476,58 @@
                     const p = { id: doc.id, ...doc.data() };
                     adminProductsArray.push(p);
                     tbody.innerHTML += `
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="px-4 py-3 font-bold">${p.name}</td>
-                            <td class="px-4 py-3">${p.category}</td>
-                            <td class="px-4 py-3 text-blue-600 font-semibold" dir="ltr">${p.price}</td>
-                            <td class="px-4 py-3" dir="ltr">${p.tax}%</td>
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="px-4 py-3 font-bold text-gray-800">${p.name}</td>
+                            <td class="px-4 py-3 text-gray-600">${p.category}</td>
+                            <td class="px-4 py-3 text-blue-600 font-bold" dir="ltr">${p.price}</td>
+                            <td class="px-4 py-3 text-gray-600" dir="ltr">${p.tax}%</td>
                             <td class="px-4 py-3 text-center">
-                                <button onclick="editProduct('${p.id}')" class="text-blue-600 hover:text-blue-800 text-sm font-bold bg-blue-50 px-3 py-1 rounded">تعديل</button>
-                                <button onclick="deleteProduct('${p.id}')" class="text-red-600 hover:text-red-800 text-sm font-bold bg-red-50 px-3 py-1 rounded mr-1">حذف</button>
+                                <button onclick="editProduct('${p.id}')" class="text-white bg-blue-500 hover:bg-blue-600 px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition">تعديل</button>
+                                <button onclick="deleteProduct('${p.id}')" class="text-white bg-red-500 hover:bg-red-600 px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition mr-1">حذف</button>
                             </td>
                         </tr>
                     `;
                 });
             } catch (error) {
-                console.error("Error loading products:", error);
+                console.error(error);
             }
         }
 
         window.editProduct = async (id) => {
             const p = adminProductsArray.find(x => x.id === id);
             const { value: formValues } = await Swal.fire({
-                title: 'تعديل المنتج',
+                title: 'تعديل بيانات المنتج',
                 html: `
-                    <div class="space-y-3 text-right">
-                        <label class="block text-sm font-bold">اسم المنتج</label>
-                        <input id="swal-name" class="swal2-input m-0 w-full" value="${p.name}">
-                        <label class="block text-sm font-bold mt-3">التصنيف (القسم)</label>
-                        <input id="swal-cat" class="swal2-input m-0 w-full" value="${p.category}">
-                        <label class="block text-sm font-bold mt-3">السعر</label>
-                        <input id="swal-price" type="number" step="0.01" class="swal2-input m-0 w-full" value="${p.price}">
-                        <label class="block text-sm font-bold mt-3">الضريبة %</label>
-                        <input id="swal-tax" type="number" class="swal2-input m-0 w-full" value="${p.tax}">
+                    <div class="space-y-4 text-right px-2">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">اسم المنتج</label>
+                            <input id="swal-name" class="w-full border rounded-lg p-2" value="${p.name}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">المجموعة (التصنيف)</label>
+                            <input id="swal-cat" class="w-full border rounded-lg p-2" value="${p.category}">
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="w-1/2">
+                                <label class="block text-sm font-bold text-gray-700 mb-1">السعر (د.ا)</label>
+                                <input id="swal-price" type="number" step="0.01" class="w-full border rounded-lg p-2" value="${p.price}">
+                            </div>
+                            <div class="w-1/2">
+                                <label class="block text-sm font-bold text-gray-700 mb-1">الضريبة (%)</label>
+                                <input id="swal-tax" type="number" class="w-full border rounded-lg p-2" value="${p.tax}">
+                            </div>
+                        </div>
                     </div>
                 `,
                 focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonText: 'حفظ التعديل',
                 cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#2563eb',
                 preConfirm: () => {
                     return {
                         name: document.getElementById('swal-name').value,
-                        category: document.getElementById('swal-cat').value,
+                        category: document.getElementById('swal-cat').value || 'عام',
                         price: parseFloat(document.getElementById('swal-price').value || 0),
                         tax: parseFloat(document.getElementById('swal-tax').value || 0)
                     }
@@ -498,13 +536,13 @@
 
             if (formValues) {
                 await updateDoc(doc(db, "products", id), formValues);
-                Swal.fire('تم التعديل', '', 'success');
+                Swal.fire('تم الحفظ', 'تم تحديث بيانات المنتج بنجاح', 'success');
                 loadAdminProducts();
             }
         };
 
         window.deleteProduct = async (id) => {
-            if(confirm('هل أنت متأكد من حذف المنتج بشكل نهائي؟')) {
+            if(confirm('هل أنت متأكد تماماً من حذف هذا المنتج؟')) {
                 await deleteDoc(doc(db, "products", id));
                 loadAdminProducts();
             }
@@ -512,7 +550,7 @@
 
         document.getElementById('import-btn').addEventListener('click', () => {
             const fileInput = document.getElementById('excel-import');
-            if (!fileInput.files.length) return Swal.fire('تنبيه', 'يرجى اختيار ملف إكسل من جهازك أولاً', 'warning');
+            if (!fileInput.files.length) return Swal.fire('تنبيه', 'الرجاء اختيار ملف إكسل لرفعه', 'warning');
             
             const reader = new FileReader();
             reader.onload = async (e) => {
@@ -521,7 +559,7 @@
                     const workbook = XLSX.read(data, {type: 'array'});
                     const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                     
-                    Swal.fire({ title: 'جاري رفع المنتجات...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    Swal.fire({ title: 'جاري استيراد المنتجات...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                     
                     for (const item of jsonData) {
                         if(item['الاسم'] && item['السعر'] !== undefined) {
@@ -533,57 +571,56 @@
                             });
                         }
                     }
-                    Swal.fire('نجاح', 'تم رفع جميع المنتجات بنجاح', 'success');
+                    Swal.fire('نجاح', 'تم استيراد المنتجات للقاعدة بنجاح', 'success');
                     loadAdminProducts();
-                    fileInput.value = ''; // تصفير الملف
+                    fileInput.value = ''; 
                 } catch (err) {
-                    console.error("Excel Error:", err);
-                    Swal.fire('خطأ', 'حدث خطأ في قراءة ملف الإكسل، تأكد من أسماء الأعمدة', 'error');
+                    Swal.fire('خطأ', 'تأكد من أن ملف الإكسل يحتوي على الأعمدة: الاسم، السعر، التصنيف، الضريبة', 'error');
                 }
             };
             reader.readAsArrayBuffer(fileInput.files[0]);
         });
 
         // ==========================================
-        // تفاصيل الطلبية والتصدير للإكسل
+        // تفاصيل الطلبية والتصدير للإكسل (لكل فرع)
         // ==========================================
         window.viewOrderDetails = (orderId, source) => {
             const order = allOrders[source].find(o => o.id === orderId);
             if(!order) return;
 
-            let itemsHtml = `<div class="max-h-60 overflow-y-auto"><table class="w-full text-right border mt-4 text-sm"><tr class="bg-gray-100"><th class="p-2 border">المنتج</th><th class="p-2 border">الكمية</th></tr>`;
-            order.items.forEach(i => itemsHtml += `<tr><td class="p-2 border">${i.name}</td><td class="p-2 border font-bold text-blue-600">${i.quantity}</td></tr>`);
+            let itemsHtml = `<div class="max-h-64 overflow-y-auto mt-2"><table class="w-full text-right border text-sm"><tr class="bg-gray-100"><th class="p-2 border">الصنف</th><th class="p-2 border">الكمية</th></tr>`;
+            order.items.forEach(i => itemsHtml += `<tr><td class="p-2 border font-bold text-gray-700">${i.name}</td><td class="p-2 border font-bold text-blue-600">${i.quantity}</td></tr>`);
             itemsHtml += `</table></div>`;
 
             Swal.fire({
-                title: `طلبية: ${order.branch}`,
+                title: `طلبية فرع: ${order.branch}`,
                 html: itemsHtml,
                 showCancelButton: true,
                 confirmButtonText: 'تنزيل الإكسل',
                 cancelButtonText: 'إغلاق',
-                confirmButtonColor: '#10b981'
+                confirmButtonColor: '#16a34a'
             }).then((res) => {
-                if (res.isConfirmed) generateExcel([order], `طلبية_${order.branch}`);
+                if (res.isConfirmed) generateExcel([order], `طلبية_فرع_${order.branch}`);
             });
         };
 
         window.exportAllOrders = (source) => {
             const orders = allOrders[source];
-            if(!orders.length) return Swal.fire('فارغ', 'لا يوجد طلبيات لتصديرها', 'info');
+            if(!orders.length) return Swal.fire('تنبيه', 'لا يوجد بيانات لتصديرها', 'info');
             generateExcel(orders, `التقرير_المجمع_${source === 'today' ? 'لليوم' : 'للأرشيف'}`);
         };
 
         window.exportSpecificBranch = async (source) => {
             const orders = allOrders[source];
             const branches = [...new Set(orders.map(o => o.branch))];
-            if(!branches.length) return Swal.fire('فارغ', 'لا يوجد طلبيات مسجلة', 'info');
+            if(!branches.length) return Swal.fire('تنبيه', 'لا يوجد طلبيات مسجلة بعد', 'info');
 
             const { value: selectedBranch } = await Swal.fire({
-                title: 'اختر الفرع المطلوب',
+                title: 'اختر الفرع لإنشاء تقريره الخاص',
                 input: 'select',
                 inputOptions: branches.reduce((acc, b) => ({...acc, [b]: b}), {}),
                 showCancelButton: true,
-                confirmButtonText: 'تنزيل التقرير',
+                confirmButtonText: 'تحميل تقرير الفرع',
                 cancelButtonText: 'إلغاء'
             });
 
@@ -594,29 +631,32 @@
         };
 
         function generateExcel(ordersArray, fileName) {
-            let wsData = [["تقرير الطلبيات"], ["تاريخ الاستخراج:", new Date().toLocaleString('ar-EG')], []];
+            let wsData = [["تقرير جرد الطلبيات"], ["تاريخ التصدير:", new Date().toLocaleString('ar-EG')], []];
             let grandTotal = 0;
 
             ordersArray.forEach((order, idx) => {
-                wsData.push([`--- طلبية (${order.branch}) ---`, order.timestamp?.toDate().toLocaleString('ar-EG') || '']);
-                wsData.push(["المنتج", "التصنيف", "الكمية", "سعر الوحدة", "الضريبة", "المجموع الفرعي"]);
+                const oDate = (order.timestamp && typeof order.timestamp.toDate === 'function') ? order.timestamp.toDate().toLocaleString('ar-EG') : 'غير متوفر';
+                
+                wsData.push([`--- طلبية فرع: ${order.branch} ---`, `التاريخ: ${oDate}`]);
+                wsData.push(["الصنف", "المجموعة", "الكمية", "سعر الوحدة", "الضريبة", "المجموع الفرعي"]);
                 
                 order.items.forEach(item => {
                     const subTotal = item.quantity * item.price * (1 + item.tax/100);
                     wsData.push([item.name, item.category, item.quantity, item.price, item.tax + "%", subTotal.toFixed(2)]);
                 });
                 
-                wsData.push(["", "", "", "", "مجموع هذه الطلبية:", order.total.toFixed(2)]);
+                wsData.push(["", "", "", "", "إجمالي الطلبية:", order.total.toFixed(2)]);
                 wsData.push([]);
                 grandTotal += order.total;
             });
             
-            wsData.push(["===================================="]);
-            wsData.push(["المجموع الكلي للتقرير:", "", "", "", "", grandTotal.toFixed(2)]);
+            wsData.push(["==================================================="]);
+            wsData.push(["المجموع الكلي لجميع الطلبيات في هذا التقرير:", "", "", "", "", grandTotal.toFixed(2)]);
 
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(wsData), "البيانات");
-            XLSX.writeFile(workbook, `${fileName.replace(/ /g, '_')}.xlsx`);
+            XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(wsData), "التقرير");
+            // تنظيف اسم الملف من المسافات
+            XLSX.writeFile(workbook, `${fileName.replace(/\s+/g, '_')}.xlsx`);
         }
     </script>
 </body>
