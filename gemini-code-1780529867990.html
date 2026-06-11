@@ -5,31 +5,161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>نظام إدارة الفروع والطلبيات</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx-js-style/1.2.0/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
-        body { font-family: 'Tajawal', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
+        :root{
+            --app-bg: #eef2ff;
+            --app-bg-2: #f8fafc;
+            --card-bg: rgba(255,255,255,.88);
+            --card-border: rgba(148,163,184,.18);
+            --card-shadow: 0 18px 45px rgba(15,23,42,.08);
+            --brand: #2563eb;
+            --brand-2: #0f172a;
+            --success: #16a34a;
+            --danger: #ef4444;
+            --radius-xl: 1.35rem;
+        }
+
+        * { box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(59,130,246,.15), transparent 26%),
+                radial-gradient(circle at bottom left, rgba(16,185,129,.12), transparent 25%),
+                linear-gradient(180deg, var(--app-bg) 0%, var(--app-bg-2) 100%);
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+            color: #1f2937;
+            overflow-x: hidden;
+        }
+
+        body::before{
+            content:"";
+            position: fixed;
+            inset: 0;
+            pointer-events:none;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,.35), transparent 45%),
+                linear-gradient(315deg, rgba(255,255,255,.2), transparent 30%);
+            z-index:0;
+        }
+
+        body > *:not(.swal2-container) { position: relative; z-index: 1; }
+
         .hidden-view { display: none !important; }
-        
-        /* حركات القوائم المنسدلة */
+
         details > summary { list-style: none; cursor: pointer; }
         details > summary::-webkit-details-marker { display: none; }
-        details[open] summary ~ * { animation: slideDown 0.2s ease-in-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        details[open] summary ~ * { animation: slideDown .18s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* تحسينات الهواتف المحمولة */
         .mobile-touch-target { min-height: 48px; min-width: 48px; }
-        .fast-click:active { transform: scale(0.96); transition: transform 0.1s; }
-        
-        /* تخطيط لوحة الإدارة */
+        .fast-click { transform: translateZ(0); will-change: transform; }
+        .fast-click:active { transform: scale(0.975); transition: transform .08s ease; }
+
         .admin-layout { display: flex; flex-direction: column; min-height: 100vh; }
         @media (min-width: 768px) { .admin-layout { flex-direction: row; } }
-        
-        /* شريط التمرير المخفي للهواتف */
+
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .soft-card{
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(14px);
+            border-radius: var(--radius-xl);
+        }
+
+        .soft-panel{
+            background: rgba(255,255,255,.94);
+            border: 1px solid rgba(226,232,240,.9);
+            box-shadow: 0 10px 30px rgba(15,23,42,.05);
+            border-radius: var(--radius-xl);
+        }
+
+        .sticky-glass{
+            backdrop-filter: blur(16px);
+            background: rgba(255,255,255,.88);
+        }
+
+        .table-wrap{
+            overflow: hidden;
+            border-radius: 1.15rem;
+        }
+
+        table { border-collapse: separate; border-spacing: 0; }
+        thead th { position: sticky; top: 0; z-index: 5; }
+        tbody tr:hover { background: rgba(239,246,255,.7); }
+
+        .action-pill{
+            border-radius: 9999px;
+            box-shadow: 0 6px 18px rgba(15,23,42,.07);
+        }
+
+        .empty-state{
+            color:#64748b;
+            text-align:center;
+            padding:2rem 1rem;
+            font-weight:700;
+        }
+
+
+        .section-surface{
+            background: rgba(255,255,255,.92);
+            border: 1px solid rgba(226,232,240,.85);
+            box-shadow: 0 14px 40px rgba(15,23,42,.06);
+            border-radius: 1.35rem;
+        }
+
+        .floating-toolbar{
+            backdrop-filter: blur(18px);
+            background: rgba(255,255,255,.9);
+        }
+
+        .input-strong:focus{
+            box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+        }
+
+        .swal2-container {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 99999 !important;
+        }
+
+        .swal2-backdrop {
+            position: absolute !important;
+            background: rgba(0, 0, 0, 0.4) !important;
+            pointer-events: auto !important;
+        }
+
+        .swal2-popup {
+            position: relative !important;
+            max-height: 85vh !important;
+        }
+
+        @media (prefers-reduced-motion: reduce){
+            *, *::before, *::after{
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="text-gray-800 relative">
 
@@ -39,8 +169,8 @@
                 <h2 class="text-3xl font-bold text-gray-800 mb-2">نظام الطلبيات الموحد</h2>
                 <p class="text-gray-500">سجل الدخول للوصول إلى لوحة التحكم</p>
             </div>
-            <input type="email" id="email" placeholder="البريد الإلكتروني" class="w-full mb-4 p-4 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-lg" autocomplete="email">
-            <input type="password" id="password" placeholder="كلمة المرور" class="w-full mb-6 p-4 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition text-lg" autocomplete="current-password">
+            <input type="email" id="email" placeholder="البريد الإلكتروني" class="w-full mb-4 p-4 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong focus:bg-white transition text-lg input-strong" autocomplete="email">
+            <input type="password" id="password" placeholder="كلمة المرور" class="w-full mb-6 p-4 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong focus:bg-white transition text-lg input-strong" autocomplete="current-password">
             <button id="login-btn" class="w-full bg-blue-600 text-white p-4 rounded-xl text-lg font-bold hover:bg-blue-700 transition fast-click shadow-md">تسجيل الدخول</button>
         </div>
     </div>
@@ -55,13 +185,17 @@
                 <button class="logout-btn bg-red-50 text-red-600 px-5 py-2 rounded-lg font-bold hover:bg-red-100 transition mobile-touch-target fast-click">خروج</button>
             </div>
 
+            <div class="mb-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <label class="block text-sm font-bold text-gray-700 mb-2">بحث سريع في الأصناف</label>
+                <input type="text" id="product-search" placeholder="ابحث باسم الصنف أو الوحدة..." class="w-full p-3 rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong">
+            </div>
             <div id="products-list-supervisor" class="space-y-4">
                 </div>
 
             <div class="mt-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-4">
                 <div>
-                    <label for="order-note" class="block text-sm font-bold text-gray-700 mb-2">ملاحظات الطلبية أو الطلب الخاص</label>
-                    <textarea id="order-note" rows="3" maxlength="500" placeholder="اكتب أي ملاحظة مهمة، أو تفاصيل طلبية خاصة..." class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"></textarea>
+                    <label for="order-note" class="block text-sm font-bold text-gray-700 mb-2">الطلبات الجانبية / ملاحظات التحضير</label>
+                    <textarea id="order-note" rows="3" maxlength="500" placeholder="اكتب أي ملاحظات جانبية أو تعديلات مطلوبة على الطلبية..." class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong focus:bg-white transition"></textarea>
                 </div>
                 <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer select-none">
                     <input type="checkbox" id="special-order" class="w-5 h-5 accent-blue-600">
@@ -71,7 +205,11 @@
 
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-15px_30px_rgba(0,0,0,0.08)] z-50 flex justify-center pb-safe">
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-15px_30px_rgba(0,0,0,0.08)] z-50 flex justify-center gap-3 pb-safe">
+            <button id="preview-order-btn" class="bg-indigo-600 text-white p-4 rounded-xl text-xl font-bold hover:bg-indigo-700 transition fast-click flex justify-center items-center gap-3 shadow-lg mobile-touch-target">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <span>معاينة الطلبية</span>
+            </button>
             <button id="submit-order-btn" class="w-full max-w-3xl bg-green-600 text-white p-4 rounded-xl text-xl font-bold hover:bg-green-700 transition fast-click flex justify-center items-center gap-3 shadow-lg mobile-touch-target">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                 <span id="order-btn-text">إرسال الطلبية للرئيسي</span>
@@ -117,15 +255,15 @@
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">من تاريخ</label>
-                            <input type="date" id="today-filter-from" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="today-filter-from" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">إلى تاريخ</label>
-                            <input type="date" id="today-filter-to" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="today-filter-to" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">الفرع</label>
-                            <select id="today-filter-branch" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                            <select id="today-filter-branch" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong"></select>
                         </div>
                         <button onclick="applyOrderFilters('today')" class="self-end bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-sm">تطبيق الفلتر</button>
                         <button onclick="resetOrderFilters('today')" class="self-end bg-gray-100 text-gray-800 px-4 py-3 rounded-xl font-bold hover:bg-gray-200 transition shadow-sm">إلغاء الفلتر</button>
@@ -159,15 +297,15 @@
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">من تاريخ</label>
-                            <input type="date" id="archive-filter-from" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="archive-filter-from" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">إلى تاريخ</label>
-                            <input type="date" id="archive-filter-to" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="archive-filter-to" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 mb-1">الفرع</label>
-                            <select id="archive-filter-branch" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+                            <select id="archive-filter-branch" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 input-strong"></select>
                         </div>
                         <button onclick="applyOrderFilters('archive')" class="self-end bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-sm">تطبيق الفلتر</button>
                         <button onclick="resetOrderFilters('archive')" class="self-end bg-gray-100 text-gray-800 px-4 py-3 rounded-xl font-bold hover:bg-gray-200 transition shadow-sm">إلغاء الفلتر</button>
@@ -204,12 +342,12 @@
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="p-4 bg-gray-100 border-b border-gray-200 flex justify-between items-center">
-                        <h3 class="font-bold text-gray-800">قائمة المنتجات في النظام (تعديل كامل)</h3>
+                        <h3 class="font-bold text-gray-800">قائمة المنتجات في النظام (الوحدة + السعر + الضريبة)</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full table-auto">
                             <thead class="bg-gray-50 text-gray-600 text-sm">
-                                <tr><th class="px-4 py-3 text-right">الاسم</th><th class="px-4 py-3 text-right">المجموعة / التصنيف</th><th class="px-4 py-3 text-right">السعر</th><th class="px-4 py-3 text-right">الضريبة</th><th class="px-4 py-3 text-center">الإجراء</th></tr>
+                                <tr><th class="px-4 py-3 text-right">الاسم</th><th class="px-4 py-3 text-right">الوحدة</th><th class="px-4 py-3 text-right">المجموعة</th><th class="px-4 py-3 text-right">السعر</th><th class="px-4 py-3 text-right">الضريبة</th><th class="px-4 py-3 text-right">الترتيب</th><th class="px-4 py-3 text-center">الإجراء</th></tr>
                             </thead>
                             <tbody id="admin-products-tbody" class="divide-y divide-gray-100"></tbody>
                         </table>
@@ -221,10 +359,91 @@
     </div>
 
     
+    <div id="preparer-view" class="hidden-view admin-layout bg-gray-50">
+        <aside class="w-full md:w-64 bg-white shadow-lg md:min-h-screen flex flex-col z-20 border-l border-gray-200">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center md:block bg-emerald-600 md:bg-white">
+                <h2 class="text-xl md:text-2xl font-bold text-white md:text-emerald-700">قسم التحضير</h2>
+                <button class="logout-btn md:hidden text-white font-bold bg-emerald-700 px-3 py-1 rounded">خروج</button>
+            </div>
+            <nav class="flex-1 p-3 flex flex-row md:flex-col gap-2 overflow-x-auto hide-scrollbar">
+                <button class="admin-tab-btn flex-shrink-0 text-right p-3 md:p-4 rounded-xl font-bold bg-emerald-50 text-emerald-700 transition flex items-center gap-2 border border-emerald-100 shadow-sm whitespace-nowrap">
+                    ✅ الطلبات المستلمة
+                </button>
+                <button onclick="loadPreparerData()" class="admin-tab-btn flex-shrink-0 text-right p-3 md:p-4 rounded-xl font-bold text-gray-600 hover:bg-gray-50 transition flex items-center gap-2 whitespace-nowrap">
+                    🔄 تحديث البيانات
+                </button>
+            </nav>
+            <div class="p-4 border-t border-gray-100 hidden md:block">
+                <button class="logout-btn w-full bg-red-50 text-red-600 p-3 rounded-xl font-bold hover:bg-red-100 transition fast-click flex justify-center items-center gap-2">
+                    تسجيل الخروج
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto w-full">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800">الطلبات المستلمة للتحضير</h3>
+                    <p class="text-gray-500 mt-1">تعديل سريع على الأصناف المرسلة بدون إعادة كتابة الطلبية كاملة</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">الفرع</label>
+                        <select id="preparer-filter-branch" onchange="applyOrderFilters('preparer')" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 input-strong"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">الحالة</label>
+                        <select id="preparer-filter-status" onchange="applyOrderFilters('preparer')" class="w-full p-3 border rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 input-strong">
+                            <option value="">كل الحالات</option>
+                            <option value="submitted">جديد</option>
+                            <option value="processing">قيد التحضير</option>
+                            <option value="prepared">تم التحضير</option>
+                            <option value="delivered">تم التسليم</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="overflow-x-hidden md:overflow-x-auto">
+                    <table class="min-w-full table-fixed md:table-auto">
+                        <thead class="bg-gray-100 text-gray-700 text-sm">
+                            <tr>
+                                <th class="px-4 py-3 text-right w-1/4">الفرع</th>
+                                <th class="px-4 py-3 text-right w-1/5">الوقت</th>
+                                <th class="px-4 py-3 text-right w-1/5">الأصناف</th>
+                                <th class="px-4 py-3 text-center w-2/5">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preparer-orders-tbody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import {
+            getFirestore,
+            doc,
+            getDoc,
+            setDoc,
+            collection,
+            getDocs,
+            addDoc,
+            updateDoc,
+            deleteDoc,
+            serverTimestamp,
+            onSnapshot,
+            writeBatch
+        } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBkuTC4Z4j0r0JEDatdEVOwV3-7ypQVE-A",
@@ -236,20 +455,28 @@
             measurementId: "G-3K8EK3S5DK"
         };
 
+        const FALLBACK_PRODUCTS = [{"name": "خبز صغير عادي", "unit": "ربطة", "price": 0.5, "sortOrder": 1}, {"name": "خبز خميل", "unit": "ربطة", "price": 0.5, "sortOrder": 2}, {"name": "خبز كبير", "unit": "ربطة", "price": 1.0, "sortOrder": 3}, {"name": "خبز اسمر/اسمرخميل", "unit": "ربطة", "price": 0, "sortOrder": 4}, {"name": "قمح حبة كاملة", "unit": "ربطة", "price": 0.5, "sortOrder": 5}, {"name": "خبز نخالة /شعير", "unit": "ربطة", "price": 0.5, "sortOrder": 6}, {"name": "خبز نخالة محسنة", "unit": "حبة", "price": 0.1, "sortOrder": 7}, {"name": "فنجان بالكيس", "unit": "كيس", "price": 0.75, "sortOrder": 8}, {"name": "شراك ابيض / اسمر ربطة", "unit": "ربطة", "price": 0.75, "sortOrder": 9}, {"name": "طابون اسمر  / ابيض", "unit": "حبة", "price": 0.15, "sortOrder": 10}, {"name": "طابون نخالة", "unit": "الحبة", "price": 0.1, "sortOrder": 11}, {"name": "توست ابيض / اسمر", "unit": "قالب", "price": 1.252, "sortOrder": 12}, {"name": "توست مالتي س/شوفان/شعير/حبة كاملة", "unit": "قالب", "price": 2.0, "sortOrder": 13}, {"name": "توست ساوردو", "unit": "قالب", "price": 2.25, "sortOrder": 14}, {"name": "برغر بطاطا كبير", "unit": "كيس", "price": 1.5, "sortOrder": 15}, {"name": "برغر بطاطا صغير", "unit": "كيس", "price": 1.5, "sortOrder": 16}, {"name": "برغر بريوش", "unit": "كيس", "price": 1.5, "sortOrder": 17}, {"name": "حمام بريوش", "unit": "كيس", "price": 0.8, "sortOrder": 18}, {"name": "زنجر بريوش", "unit": "كيس", "price": 1.2, "sortOrder": 19}, {"name": "حمام شوكلت شبيس", "unit": "كيس", "price": 0.8, "sortOrder": 20}, {"name": "شباتا", "unit": "كيس", "price": 1.2, "sortOrder": 21}, {"name": "برغر قمح حبة كاملة", "unit": "كيس", "price": 1.0, "sortOrder": 22}, {"name": "عيش مصري /كينوا/شوفان/شعير بلدي/تنور حجري/مسخن", "unit": "ربطة", "price": 0.75, "sortOrder": 23}, {"name": "تورتيلا اسباني صغير", "unit": "ربطة", "price": 2.0, "sortOrder": 24}, {"name": "تورتيلااسباني كبير", "unit": "ربطة", "price": 2.25, "sortOrder": 25}, {"name": "صمون عراقي ابيض/اسمر", "unit": "ربطة", "price": 0.75, "sortOrder": 26}, {"name": "خبز بروتين/تنور حبة كاملة/طحالب", "unit": "ربطة", "price": 1.0, "sortOrder": 27}, {"name": "حبة كاملة محسن/كتان/شوفان محسن", "unit": "ربطة", "price": 1.0, "sortOrder": 28}, {"name": "تورتيلا الراية", "unit": "ربطة", "price": 0.75, "sortOrder": 29}, {"name": "معجنات شختورة جبنة", "unit": "حبة", "price": 0.3, "sortOrder": 30}, {"name": "معجنات شختورة لحمة", "unit": "حبة", "price": 0.3, "sortOrder": 31}, {"name": "معجنات بطاطا", "unit": "حبة", "price": 0.3, "sortOrder": 32}, {"name": "معجنات جبنة صفراء", "unit": "حبة", "price": 0.3, "sortOrder": 33}, {"name": "معجنات مجدلة زعتر", "unit": "حبة", "price": 0.3, "sortOrder": 34}, {"name": "معجنات مجدلة جبنة وزعتر", "unit": "حبة", "price": 0.3, "sortOrder": 35}, {"name": "معجنات مسحب جاج", "unit": "حبة", "price": 0.3, "sortOrder": 36}, {"name": "معجنات لحمه  حارة هنديه", "unit": "حبة", "price": 0.3, "sortOrder": 37}, {"name": "معجنات بيتزا ساندويش", "unit": "حبة", "price": 1.0, "sortOrder": 38}, {"name": "معجنات بيتزا مدوره", "unit": "حبة", "price": 0.4, "sortOrder": 39}, {"name": "معجنات  نقانق مع جبنة", "unit": "حبة", "price": 0.5, "sortOrder": 40}, {"name": "معجنات نقانق", "unit": "حبة", "price": 0.3, "sortOrder": 41}, {"name": "معجنات كروسان جبنة", "unit": "حبة", "price": 0.3, "sortOrder": 42}, {"name": "معجنات سبانخ", "unit": "حبة", "price": 0.3, "sortOrder": 43}, {"name": "كبه", "unit": "حبة", "price": 0.7, "sortOrder": 44}, {"name": "شراك مسخن دجاج", "unit": "حبة", "price": 0.5, "sortOrder": 45}, {"name": "عش البلبل لحمة/جبنة", "unit": "حبة", "price": 0.5, "sortOrder": 46}, {"name": "منقوش زعتر طابون", "unit": "حبة", "price": 0.75, "sortOrder": 47}, {"name": "منقوش جبنة وزعتر طابون", "unit": "حبة", "price": 0.85, "sortOrder": 48}, {"name": "منقوش جبنة طابون", "unit": "حبة", "price": 1.0, "sortOrder": 49}, {"name": "كروسان صفراء / بيضاء/ سادة/ زعتر/ تيركي / شوكلاته", "unit": "حبة", "price": 1.0, "sortOrder": 50}, {"name": "قرشلة سادة", "unit": "كيلو", "price": 1.7, "sortOrder": 51}, {"name": "قرشلة محسنة/اصابع يدوي", "unit": "كيلو", "price": 2.5, "sortOrder": 52}, {"name": "اصابع سادة / سمسم/ قزحة/ يانسون", "unit": "كيلو", "price": 1.7, "sortOrder": 53}, {"name": "مدورة سمسم / قزحة / سادة/ يانسون", "unit": "كيلو", "price": 1.7, "sortOrder": 54}, {"name": "بصراوي يدوي / مكينة / اسمر", "unit": "كيلو", "price": 3.0, "sortOrder": 55}, {"name": "كراسينا سمسم / سادة", "unit": "كيلو", "price": 2.25, "sortOrder": 56}, {"name": "ميمو اصابع / مدور", "unit": "كيلو", "price": 3.0, "sortOrder": 57}, {"name": "موالح/ماسا", "unit": "علبة", "price": 1.5, "sortOrder": 58}, {"name": "كعك ماسة", "unit": "كيلو", "price": 4.0, "sortOrder": 59}, {"name": "يلنجي", "unit": "صحن", "price": 2.0, "sortOrder": 60}, {"name": "هريسة بالقزحة / السمن البلدي / الفستق الحلبي / المكسرات/حلبة", "unit": "صحن", "price": 2.25, "sortOrder": 61}, {"name": "شوفان بالتمر/ كليجة", "unit": "علبة", "price": 5.0, "sortOrder": 62}, {"name": "قراقيش حلوة  / مالحة", "unit": "علبة", "price": 1.5, "sortOrder": 63}, {"name": "صحون موالح تركية صغيرة", "unit": "صحن", "price": 2.0, "sortOrder": 64}, {"name": "موالح زعتر / كمون / سادة", "unit": "كيلو", "price": 2.5, "sortOrder": 65}, {"name": "اصابع موالح هشه", "unit": "علبة", "price": 1.5, "sortOrder": 66}, {"name": "موالح هشه صحن كبير", "unit": "صحن", "price": 2.0, "sortOrder": 67}, {"name": "وافل / كريب", "unit": "صحن", "price": 2.0, "sortOrder": 68}, {"name": "مافن وسط", "unit": "علبة", "price": 2.5, "sortOrder": 69}, {"name": "مافن شوكولا/فواكه/لوز/تارت فواكه صغير", "unit": "حبة", "price": 0.75, "sortOrder": 70}, {"name": "مافن/كروسان/سينابون  ميني", "unit": "علبة", "price": 2.0, "sortOrder": 71}, {"name": "اصابع جوز/بيانو/جمبري/يونانية/عش النوتيلا", "unit": "الكيلو", "price": 6.5, "sortOrder": 72}, {"name": "ثم السمكة", "unit": "الكيلو", "price": 5.5, "sortOrder": 73}, {"name": "كرابيج حلب", "unit": "حبة", "price": 0.2, "sortOrder": 74}, {"name": "خبز رمضان زعتر", "unit": "حبة", "price": 1.0, "sortOrder": 75}, {"name": "كيك العسل", "unit": "قالب", "price": 6.0, "sortOrder": 76}, {"name": "كيك فاخر حديد/قالب فاخر", "unit": "علبة", "price": 5.0, "sortOrder": 77}, {"name": "دونات ساده مشكل", "unit": "حبة", "price": 0.6, "sortOrder": 78}, {"name": "دونات محشي", "unit": "حبة", "price": 1.0, "sortOrder": 79}, {"name": "دونات ميني محشي", "unit": "حبة", "price": 0.5, "sortOrder": 80}, {"name": "سينابون/دنش", "unit": "حبة", "price": 1.0, "sortOrder": 81}, {"name": "كيك صغير", "unit": "قالب", "price": 7.0, "sortOrder": 82}, {"name": "كيك وسط", "unit": "قالب", "price": 10.0, "sortOrder": 83}, {"name": "كيك كبير", "unit": "قالب", "price": 12.0, "sortOrder": 84}, {"name": "كيك منزلي برتقال / مكس / شوكلاته", "unit": "قالب", "price": 2.75, "sortOrder": 85}, {"name": "كب كيك برتقال  / شوكلاته", "unit": "حبة", "price": 0.25, "sortOrder": 86}, {"name": "انجليش كيك برتقال / شوكلاته", "unit": "قالب", "price": 2.0, "sortOrder": 87}, {"name": "قطع كيك (دينار)", "unit": "حبة", "price": 1.0, "sortOrder": 88}, {"name": "قطع كيك (0.75) قرش", "unit": "حبة", "price": 0.75, "sortOrder": 89}, {"name": "تارت (6 حبات)/15 حبة", "unit": "علبة", "price": 2.0, "sortOrder": 90}, {"name": "خبز ذرة", "unit": "صحن", "price": 0.75, "sortOrder": 91}, {"name": "كرات الزعتر", "unit": "علبة", "price": 2.5, "sortOrder": 92}, {"name": "كاندي", "unit": "علبة", "price": 1.0, "sortOrder": 93}, {"name": "تارت شاهين", "unit": "علبة", "price": 2.0, "sortOrder": 94}, {"name": "كوكيز", "unit": "حبة", "price": 0.75, "sortOrder": 95}, {"name": "كوكيز كرنكل", "unit": "العلبة", "price": 2.0, "sortOrder": 96}, {"name": "كرات كيك", "unit": "حبة", "price": 2.0, "sortOrder": 97}, {"name": "فطيره", "unit": "حبة", "price": 0.7, "sortOrder": 98}, {"name": "فطيره سادة", "unit": "حبة", "price": 1.3, "sortOrder": 99}, {"name": "فطيرة(مكسرات)", "unit": "حبة", "price": 2.0, "sortOrder": 100}, {"name": "فطيرة (جبنة)", "unit": "حبة", "price": 2.25, "sortOrder": 101}, {"name": "فطيرة (دينار)", "unit": "حبة", "price": 1.5, "sortOrder": 102}, {"name": "معمول سميد دايت", "unit": "كيلو", "price": 6.0, "sortOrder": 103}, {"name": "معمول وسط", "unit": "علبة", "price": 3.0, "sortOrder": 104}, {"name": "معمول عرض", "unit": "علبة", "price": 3.0, "sortOrder": 105}, {"name": "اسوارة فلاحي", "unit": "علبة", "price": 7.0, "sortOrder": 106}, {"name": "سميد قهوة", "unit": "علبة", "price": 3.5, "sortOrder": 107}, {"name": "معمول لبناني", "unit": "كيلو", "price": 4.5, "sortOrder": 108}, {"name": "معمول نجمة فستق حلبي/لقمة", "unit": "كيلو", "price": 7.0, "sortOrder": 109}, {"name": "معمول عجوة مشكل", "unit": "كيلو", "price": 6.5, "sortOrder": 110}, {"name": "برازق كبيرة", "unit": "كيلو", "price": 6.0, "sortOrder": 111}, {"name": "غريبة s + سنيورة", "unit": "كيلو", "price": 6.0, "sortOrder": 112}, {"name": "بيتفورعرض( صب)", "unit": "كيلو", "price": 5.5, "sortOrder": 113}, {"name": "بيتفور سابلية كيلو", "unit": "كيلو", "price": 8.5, "sortOrder": 114}, {"name": "بيتفور سياحي", "unit": "كيلو", "price": 10.0, "sortOrder": 115}, {"name": "بيتفور فرنسي", "unit": "كيلو", "price": 7.5, "sortOrder": 116}, {"name": "برازق عرض", "unit": "علبة", "price": 4.0, "sortOrder": 117}, {"name": "برازق   شاميه", "unit": "علبة", "price": 4.0, "sortOrder": 118}, {"name": "برازق شامية دايت", "unit": "علبة", "price": 4.5, "sortOrder": 119}, {"name": "برازق كتان", "unit": "علبة", "price": 5.0, "sortOrder": 120}, {"name": "غريبة شامية", "unit": "علبة", "price": 4.0, "sortOrder": 121}, {"name": "غريبه شامية دايت", "unit": "علبة", "price": 4.5, "sortOrder": 122}, {"name": "بيتفور سابلية", "unit": "صحن", "price": 2.0, "sortOrder": 123}, {"name": "بيتفور سابلية 600 غرام", "unit": "علبة", "price": 6.5, "sortOrder": 124}, {"name": "بيتفور سياحي", "unit": "علبة", "price": 4.0, "sortOrder": 125}, {"name": "بيتفور حب عرض", "unit": "علبة", "price": 4.0, "sortOrder": 126}, {"name": "بيتفور فرنسي", "unit": "علبة", "price": 2.75, "sortOrder": 127}, {"name": "مبرومة/وربات قشطة /جبنة", "unit": "كيلو", "price": 5.0, "sortOrder": 128}, {"name": "بسبوسة جوز هند", "unit": "كيلو", "price": 4.5, "sortOrder": 129}, {"name": "عش نوتيلا", "unit": "كيلو", "price": 6.5, "sortOrder": 130}, {"name": "قطريات مشكلة", "unit": "كيلو", "price": 3.5, "sortOrder": 131}, {"name": "كلاج جبنة/جوز", "unit": "كيلو", "price": 7.5, "sortOrder": 132}, {"name": "خبز ارز خالي جلوتين", "unit": "كيس", "price": 1.5, "sortOrder": 133}, {"name": "تارت فواكه خالي جلوتين", "unit": "حبة", "price": 1.0, "sortOrder": 134}, {"name": "تارت شوكولا /سابليه/كوكيز خالي جلوتين", "unit": "علبة", "price": 2.0, "sortOrder": 135}, {"name": "بسبوسة/قراقيش/اصابع زينب خالي جلوتين", "unit": "علبة", "price": 2.0, "sortOrder": 136}, {"name": "انجلش كيك ابيض/اسود خالي جلوتين", "unit": "قالب", "price": 2.5, "sortOrder": 137}, {"name": "تشيز كيك", "unit": "قالب", "price": 12.0, "sortOrder": 138}, {"name": "جوز هند", "unit": "كاسة", "price": 1.0, "sortOrder": 139}, {"name": "جوز هند", "unit": "علبة", "price": 2.0, "sortOrder": 140}, {"name": "جوز هند", "unit": "الحبة", "price": 0.3, "sortOrder": 141}, {"name": "بقلاوة بالكاجو", "unit": "كيلو", "price": 11.0, "sortOrder": 142}, {"name": "بقلاوة بالفستق الحلبي", "unit": "كيلو", "price": 17.0, "sortOrder": 143}, {"name": "بقلاوة خالية من السكر", "unit": "كيلو", "price": 14.0, "sortOrder": 144}, {"name": "بودنغ تركية", "unit": "علبة", "price": 1.0, "sortOrder": 145}, {"name": "كيكة تركية", "unit": "كيلو", "price": 5.5, "sortOrder": 146}, {"name": "عصملية/نمورة/فيصلية/خد العروس", "unit": "كيلو", "price": 5.0, "sortOrder": 147}, {"name": "كنافة نوتيلا  / لوتس/كرسبي/دبي", "unit": "علبة", "price": 1.0, "sortOrder": 148}, {"name": "كريزه/مهلبية/رز بحليب/بودنغ", "unit": "علبة", "price": 0.6, "sortOrder": 149}, {"name": "كريزة صحون", "unit": "صحن", "price": 1.0, "sortOrder": 150}, {"name": "جوزية كاسات", "unit": "كاسة", "price": 1.5, "sortOrder": 151}, {"name": "بالمية", "unit": "صحن", "price": 2.0, "sortOrder": 152}, {"name": "حلاوة الجبن", "unit": "كيلو", "price": 5.0, "sortOrder": 153}, {"name": "حلاوة الجبن", "unit": "صحن", "price": 2.5, "sortOrder": 154}, {"name": "دحدح/صدف البحر", "unit": "الكيلو", "price": 5.0, "sortOrder": 155}, {"name": "هريسة شامية", "unit": "الكيلو", "price": 7.5, "sortOrder": 156}, {"name": "هريسة مكسرات/بقلاوة اسية", "unit": "الكيلو", "price": 6.5, "sortOrder": 157}, {"name": "هريسة نوتيلا /البلدية/القرفة/الراية", "unit": "الكيلو", "price": 5.0, "sortOrder": 158}, {"name": "بسبوسة/بسبوسة شوكولا/لوتس", "unit": "الكيلو", "price": 5.0, "sortOrder": 159}, {"name": "هريسة حبة البركة", "unit": "الكيلو", "price": 5.5, "sortOrder": 160}, {"name": "قطايف عادي", "unit": "الكيلو", "price": 1.3, "sortOrder": 161}, {"name": "قطايف عصافيري", "unit": "الكيلو", "price": 1.5, "sortOrder": 162}, {"name": "فرنسي ساوردو", "unit": "حبة", "price": 1.0, "sortOrder": 163}, {"name": "خبز رمضان جبنة", "unit": "حبة", "price": 1.5, "sortOrder": 164}, {"name": "حمام عادي", "unit": "حبة", "price": 0.06, "sortOrder": 165}, {"name": "حمام اسمر", "unit": "حبة", "price": 0.1, "sortOrder": 166}, {"name": "حمام سمسم", "unit": "حبة", "price": 0.2, "sortOrder": 167}, {"name": "طويلة سمسم", "unit": "حبة", "price": 0.35, "sortOrder": 168}, {"name": "زنجر", "unit": "حبة", "price": 0.15, "sortOrder": 169}, {"name": "برجر عادي", "unit": "حبة", "price": 0.15, "sortOrder": 170}, {"name": "كتكوت", "unit": "حبة", "price": 0.07, "sortOrder": 171}, {"name": "فرنسي ابيض/اسمر كبير", "unit": "حبة", "price": 0.4, "sortOrder": 172}, {"name": "فرنسي ابيض/اسمر صغير/مدورة سمسم", "unit": "حبة", "price": 0.25, "sortOrder": 173}, {"name": "ترسة عجوة/مجدلة زبيب/وردة", "unit": "حبة", "price": 0.35, "sortOrder": 174}, {"name": "معروك عجوة/زبيب وجوز هند", "unit": "حبة", "price": 0.5, "sortOrder": 175}, {"name": "خبز رمضان", "unit": "حبة", "price": 0.4, "sortOrder": 176}, {"name": "معجنات سواريه", "unit": "حبة", "price": 0.35, "sortOrder": 177}, {"name": "سلطة/ساندويش", "unit": "حبة", "price": 1.5, "sortOrder": 178}];
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         const state = {
+            currentUser: null,
             currentUserData: null,
-            products: [],
+            masterProducts: [],
+            masterProductsById: new Map(),
             adminProducts: [],
-            orders: { today: [], archive: [] },
+            orders: { all: [], today: [], archive: [] },
             filters: {
                 today: { from: '', to: '', branch: '' },
-                archive: { from: '', to: '', branch: '' }
+                archive: { from: '', to: '', branch: '' },
+                preparer: { from: '', to: '', branch: '', status: '' }
             },
-            ordersUnsubscribe: null
+            ordersUnsubscribe: null,
+            activeView: 'login',
+            currentRole: null,
+            supervisorExpandedGroups: {}
         };
 
         const getEl = (id) => document.getElementById(id);
@@ -268,7 +495,23 @@
         }
 
         function safeQty(value) {
-            return Math.max(0, Math.floor(safeNumber(value, 0)));
+            const n = Math.floor(safeNumber(value, 0));
+            return Number.isFinite(n) && n > 0 ? n : 0;
+        }
+
+        function debounce(fn, wait = 180) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), wait);
+            };
+        }
+
+        function normalizeKey(value) {
+            return safeText(value)
+                .toLowerCase()
+                .replace(/[ًٌٍَُِّْـ]/g, '')
+                .replace(/[^\p{L}\p{N}]+/gu, '');
         }
 
         function todayYMD(date = new Date()) {
@@ -314,18 +557,48 @@
 
         function extractOrderYMD(order) {
             if (order?.dateStr) return normalizeDateInput(order.dateStr);
+            if (order?.preparedAt && typeof order.preparedAt.toDate === 'function') return todayYMD(order.preparedAt.toDate());
             if (order?.timestamp && typeof order.timestamp.toDate === 'function') return todayYMD(order.timestamp.toDate());
             if (order?.timestamp && typeof order.timestamp.seconds === 'number') return todayYMD(new Date(order.timestamp.seconds * 1000));
             return '';
+        }
+
+        function buildProductId(product) {
+            const base = normalizeKey(product.name || '') || `product-${Math.random().toString(36).slice(2, 8)}`;
+            return base;
+        }
+
+        function normalizeProduct(product = {}, index = 0) {
+            const name = safeText(product.name, 'صنف غير محدد');
+            const unit = safeText(product.unit || product.category || product.group || product.section, 'حبة');
+            const category = safeText(product.category || product.group || product.section || product.department || unit, 'أصناف عامة');
+            const price = safeNumber(product.price);
+            const tax = safeNumber(product.tax);
+            const sortOrder = safeNumber(product.sortOrder, index + 1);
+            const id = safeText(product.id, buildProductId({ name, unit, sortOrder }));
+            return {
+                id,
+                name,
+                unit,
+                category,
+                price,
+                tax,
+                sortOrder,
+                active: product.active !== false
+            };
         }
 
         function normalizeItem(item = {}) {
             const price = safeNumber(item.price);
             const quantity = safeQty(item.quantity);
             const tax = safeNumber(item.tax);
+            const unit = safeText(item.unit || item.category || item.group, '');
+            const category = safeText(item.category || item.group || unit, 'أصناف عامة');
             return {
+                id: safeText(item.id, buildProductId({ name: item.name, unit })),
                 name: safeText(item.name, 'صنف غير محدد'),
-                category: safeText(item.category, 'أصناف عامة'),
+                unit,
+                category,
                 quantity,
                 price,
                 tax,
@@ -334,7 +607,17 @@
         }
 
         function normalizeOrder(order = {}) {
-            const items = Array.isArray(order.items) ? order.items.map(normalizeItem) : [];
+            const sourceItems = Array.isArray(order.preparedItems) && order.preparedItems.length
+                ? order.preparedItems
+                : (Array.isArray(order.items) && order.items.length
+                    ? order.items
+                    : (Array.isArray(order.originalItems) ? order.originalItems : []));
+
+            const items = sourceItems.map(normalizeItem);
+            const originalItems = Array.isArray(order.originalItems) && order.originalItems.length
+                ? order.originalItems.map(normalizeItem)
+                : items.map(normalizeItem);
+            const preparedItems = Array.isArray(order.preparedItems) ? order.preparedItems.map(normalizeItem) : [];
             const totalFromItems = items.reduce((sum, item) => sum + item.subtotal, 0);
             const total = safeNumber(order.total, totalFromItems);
             return {
@@ -342,43 +625,61 @@
                 id: order.id || '',
                 branch: safeText(order.branch, 'فرع غير محدد'),
                 items,
+                originalItems,
+                preparedItems,
                 total,
                 note: safeText(order.note, ''),
-                special: Boolean(order.special)
+                special: Boolean(order.special),
+                status: safeText(order.status, 'submitted'),
+                orderNo: safeText(order.orderNo, order.id || ''),
+                preparedBy: order.preparedBy || null
             };
         }
 
-        function getSupervisorWhatsappText(items, branch, note, special) {
-            let text = `*📦 طلبية فرع: ${branch}*\n`;
-            text += `التاريخ: ${new Date().toLocaleDateString('ar-EG')}\n`;
-            if (special) text += `*نوع الطلبية:* خاصة\n`;
-            if (note) text += `*ملاحظات:* ${note}\n`;
-            text += `\n`;
+        function getFinalOrderItems(order) {
+            const normalized = normalizeOrder(order);
+            if (normalized.preparedItems && normalized.preparedItems.length) return normalized.preparedItems;
+            if (normalized.items && normalized.items.length) return normalized.items;
+            return normalized.originalItems || [];
+        }
+
+        function calcOrderTotal(items) {
+            return items.reduce((sum, item) => sum + safeQty(item.quantity) * safeNumber(item.price) * (1 + safeNumber(item.tax) / 100), 0);
+        }
+
+        function buildWhatsAppText(order, mode = 'supervisor') {
+            const normalized = normalizeOrder(order);
+            const items = getFinalOrderItems(normalized);
+
+            const title = mode === 'preparer'
+                ? '*الطلبية المرسلة*'
+                : `*طلبية فرع: ${normalized.branch}*`;
+
+            const lines = [title, `الفرع: ${normalized.branch}`];
+            if (normalized.special) lines.push('نوع الطلبية: خاصة');
+            if (normalized.note) lines.push(`ملاحظات: ${normalized.note}`);
+
+            lines.push('');
             items.forEach(item => {
-                text += `▪️ ${item.name}: *${item.quantity}*\n`;
+                const unitText = item.unit ? ` (${item.unit})` : '';
+                lines.push(`▪️ ${item.name}${unitText}: ${item.quantity}`);
             });
-            const total = items.reduce((sum, item) => sum + item.quantity * item.price * (1 + item.tax / 100), 0);
-            text += `\n*الإجمالي المتوقع:* ${formatMoney(total)}`;
-            return text;
+
+            return lines.join('\n');
+        }
+
+        function getSupervisorWhatsappText(items, branch, note, special) {
+            return buildWhatsAppText({ branch, items, originalItems: items, preparedItems: [], note, special, status: 'submitted' }, 'supervisor');
         }
 
         function getWhatsappTextForOrder(order) {
-            const normalized = normalizeOrder(order);
-            let text = `*📦 طلبية فرع: ${normalized.branch}*\n`;
-            text += `التاريخ: ${formatDateTime(normalized.timestamp)}\n`;
-            if (normalized.special) text += `*نوع الطلبية:* خاصة\n`;
-            if (normalized.note) text += `*ملاحظات:* ${normalized.note}\n`;
-            text += `\n`;
-            normalized.items.forEach(item => {
-                text += `▪️ ${item.name}: *${item.quantity}*\n`;
-            });
-            text += `\n*الإجمالي:* ${formatMoney(normalized.total)}`;
-            return text;
+            return buildWhatsAppText(order, 'supervisor');
         }
 
         function showView(viewId) {
-            ['login-view', 'supervisor-view', 'admin-view'].forEach(id => hide(getEl(id)));
+            ['login-view', 'supervisor-view', 'admin-view', 'preparer-view'].forEach(id => hide(getEl(id)));
             show(getEl(viewId));
+            state.activeView = viewId.replace('-view', '');
         }
 
         function setActiveTab(tabId) {
@@ -398,11 +699,32 @@
             }
         }
 
-        window.switchAdminTab = setActiveTab;
+        function getStatusLabel(status) {
+            switch (safeText(status, 'submitted')) {
+                case 'prepared': return 'تم التحضير';
+                case 'processing': return 'قيد التحضير';
+                case 'delivered': return 'تم التسليم';
+                case 'submitted':
+                default: return 'جديد';
+            }
+        }
+
+        function getStatusBadge(status) {
+            const label = getStatusLabel(status);
+            const key = safeText(status, 'submitted');
+            const cls = key === 'prepared'
+                ? 'bg-green-50 text-green-700 border-green-100'
+                : key === 'processing'
+                    ? 'bg-amber-50 text-amber-700 border-amber-100'
+                    : key === 'delivered'
+                        ? 'bg-indigo-50 text-indigo-700 border-indigo-100'
+                        : 'bg-blue-50 text-blue-700 border-blue-100';
+            return `<span class="text-xs font-bold px-2 py-1 rounded-full border ${cls}">${label}</span>`;
+        }
 
         function populateBranchFilterSelects() {
-            const branches = [...new Set([...(state.orders.today || []), ...(state.orders.archive || [])].map(o => normalizeOrder(o).branch))].sort((a, b) => a.localeCompare(b, 'ar'));
-            ['today-filter-branch', 'archive-filter-branch'].forEach(id => {
+            const branches = [...new Set((state.orders.all || []).map(o => normalizeOrder(o).branch))].sort((a, b) => a.localeCompare(b, 'ar'));
+            ['today-filter-branch', 'archive-filter-branch', 'preparer-filter-branch'].forEach(id => {
                 const select = getEl(id);
                 if (!select) return;
                 const current = select.value;
@@ -412,20 +734,23 @@
         }
 
         function getFilteredOrders(source) {
-            const filters = state.filters[source];
-            const orders = state.orders[source] || [];
+            const filters = state.filters[source] || {};
+            const orders = source === 'preparer' ? (state.orders.all || []) : (state.orders[source] || []);
             return orders
                 .map(normalizeOrder)
                 .filter(order => {
                     const ymd = extractOrderYMD(order);
                     if (filters.branch && order.branch !== filters.branch) return false;
-                    if (filters.from && ymd && ymd < filters.from) return false;
-                    if (filters.to && ymd && ymd > filters.to) return false;
+                    if (source !== 'preparer') {
+                        if (filters.from && ymd && ymd < filters.from) return false;
+                        if (filters.to && ymd && ymd > filters.to) return false;
+                    }
+                    if (source === 'preparer' && filters.status && order.status !== filters.status) return false;
                     return true;
                 })
                 .sort((a, b) => {
-                    const timeA = a.timestamp && typeof a.timestamp.toMillis === 'function' ? a.timestamp.toMillis() : (a.timestamp && typeof a.timestamp.seconds === 'number' ? a.timestamp.seconds * 1000 : 0);
-                    const timeB = b.timestamp && typeof b.timestamp.toMillis === 'function' ? b.timestamp.toMillis() : (b.timestamp && typeof b.timestamp.seconds === 'number' ? b.timestamp.seconds * 1000 : 0);
+                    const timeA = a.preparedAt && typeof a.preparedAt.toMillis === 'function' ? a.preparedAt.toMillis() : (a.timestamp && typeof a.timestamp.toMillis === 'function' ? a.timestamp.toMillis() : 0);
+                    const timeB = b.preparedAt && typeof b.preparedAt.toMillis === 'function' ? b.preparedAt.toMillis() : (b.timestamp && typeof b.timestamp.toMillis === 'function' ? b.timestamp.toMillis() : 0);
                     return timeB - timeA;
                 });
         }
@@ -434,125 +759,336 @@
             const tbody = getEl(tbodyId);
             if (!tbody) return;
             const ordersArray = getFilteredOrders(source);
-            tbody.innerHTML = '';
 
             if (!ordersArray.length) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-8 text-center text-gray-400 font-bold text-lg">لا يوجد بيانات مطابقة للفلتر</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state">لا يوجد بيانات مطابقة للفلتر</td></tr>`;
                 return;
             }
 
-            ordersArray.forEach(order => {
-                const dateStr = formatDateTime(order.timestamp);
+            tbody.innerHTML = ordersArray.map(order => {
+                const dateStr = formatDateTime(order.preparedAt || order.timestamp);
                 const noteBadge = order.note ? `<div class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-full px-2 py-1 inline-block mt-1" title="${escapeHtml(order.note)}">ملاحظة موجودة</div>` : '';
                 const specialBadge = order.special ? `<div class="text-xs text-red-700 bg-red-50 border border-red-100 rounded-full px-2 py-1 inline-block mt-1">خاصة</div>` : '';
-                const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(getWhatsappTextForOrder(order))}`;
+                const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(buildWhatsAppText(order, source === 'preparer' ? 'preparer' : 'supervisor'))}`;
+                const itemCount = getFinalOrderItems(order).length;
 
-                tbody.insertAdjacentHTML('beforeend', `
+                return `
                     <tr class="hover:bg-blue-50 transition border-b border-gray-100">
                         <td class="px-4 py-4 text-right font-bold text-gray-800">
                             <div>${escapeHtml(order.branch)}</div>
-                            <div class="flex gap-2 flex-wrap">${specialBadge}${noteBadge}</div>
+                            <div class="flex gap-2 flex-wrap mt-1">${getStatusBadge(order.status)}${specialBadge}${noteBadge}</div>
                         </td>
                         <td class="px-4 py-4 text-right text-gray-500 text-sm" dir="ltr">${escapeHtml(dateStr)}</td>
-                        <td class="px-4 py-4 text-right font-bold text-green-600">${formatMoney(order.total)}</td>
+                        <td class="px-4 py-4 text-right">
+                            <div class="font-bold text-green-600">${formatMoney(order.total)}</div>
+                            <div class="text-xs text-gray-400 mt-1">${itemCount} صنف</div>
+                        </td>
                         <td class="px-4 py-4 text-center">
                             <div class="flex justify-center gap-2 flex-wrap">
                                 <button onclick="viewOrderDetails('${escapeJs(order.id)}', '${source}')" class="bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-100 border border-indigo-100 transition shadow-sm" title="تفاصيل الطلبية">
-                                    التفاصيل وتنزيل الإكسل
+                                    التفاصيل والإكسل
                                 </button>
+                                ${canEditOrders() ? `<button onclick="openOrderEditor('${escapeJs(order.id)}')" class="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 border border-blue-100 transition shadow-sm" title="تعديل الطلبية">تحضير/تعديل</button>` : ''}
                                 <a href="${waLink}" target="_blank" class="bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 border border-green-100 transition shadow-sm flex items-center justify-center" title="إرسال عبر الواتساب">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.125-.397-.179-.974-.39-1.984-1.292-.958-.854-1.603-1.908-1.788-2.215-.187-.308-.02-.475.132-.627.138-.137.302-.352.453-.529.151-.176.201-.303.303-.505.101-.202.05-.38-.025-.531-.076-.151-.663-1.605-.909-2.197-.24-.577-.484-.499-.663-.508-.168-.009-.36-.011-.553-.011-.192 0-.505.072-.77.36-.264.288-1.01 .986-1.01 2.404s1.034 2.784 1.178 2.976c.144.192 2.029 3.097 4.914 4.341 2.409 1.036 3.256.973 3.844.872.646-.11 1.982-.808 2.261-1.589.28-.781.28-1.45.196-1.589-.084-.138-.302-.221-.604-.372z"></path></svg>
                                 </a>
                             </div>
                         </td>
                     </tr>
-                `);
-            });
+                `;
+            }).join('');
+        }
+        function scheduleOrdersRender() {
+    renderOrdersTable('today-orders-tbody', 'today');
+    renderOrdersTable('archive-orders-tbody', 'archive');
+
+    if (typeof renderPreparerOrdersTable === 'function') {
+        renderPreparerOrdersTable();
+    }
+}
+
+        function canEditOrders() {
+            return state.currentRole === 'admin' || state.currentRole === 'preparer' || state.currentRole === 'receiver';
+        }
+
+        function updateSupervisorSearch() {
+            renderSupervisorProducts();
         }
 
         function resetSupervisorForm() {
-            state.products.forEach(p => p.quantity = 0);
-            document.querySelectorAll('[id^="qty-"]').forEach(el => el.innerText = '0');
+            state.masterProducts.forEach(p => p.quantity = 0);
+            document.querySelectorAll('[id^="qty-input-"]').forEach(el => el.value = '0');
             const note = getEl('order-note');
             const special = getEl('special-order');
             if (note) note.value = '';
             if (special) special.checked = false;
             updateSubmitButtonLabel();
+            renderSupervisorProducts();
         }
 
         function updateSubmitButtonLabel() {
-            const totalQty = state.products.reduce((sum, p) => sum + safeQty(p.quantity), 0);
+            const totalQty = state.masterProducts.reduce((sum, p) => sum + safeQty(p.quantity), 0);
             const btnText = getEl('order-btn-text');
-            if (btnText) btnText.innerText = totalQty > 0 ? `تأكيد وإرسال (${totalQty} أصناف)` : `إرسال الطلبية للرئيسي`;
+            if (btnText) btnText.innerText = totalQty > 0 ? `تأكيد وإرسال (${totalQty} صنف)` : `إرسال الطلبية للرئيسي`;
         }
 
-        async function updateSupervisorProducts() {
-            try {
-                const snap = await getDocs(collection(db, "products"));
-                state.products = [];
-                const categories = {};
+        function updateProductQuantity(productId, newQty) {
+            const product = state.masterProductsById.get(productId) || state.masterProducts.find(p => p.id === productId);
+            if (!product) return;
 
-                snap.forEach(d => {
-                    const p = { id: d.id, ...d.data(), quantity: 0 };
-                    p.name = safeText(p.name, 'صنف غير محدد');
-                    p.category = safeText(p.category, 'أصناف عامة');
-                    p.price = safeNumber(p.price);
-                    p.tax = safeNumber(p.tax);
-                    p.quantity = safeQty(p.quantity);
-                    state.products.push(p);
-                    categories[p.category] = categories[p.category] || [];
-                    categories[p.category].push(p);
-                });
+            const qty = safeQty(newQty);
+            product.quantity = qty;
 
-                const container = getEl('products-list-supervisor');
-                if (!container) return;
-                container.innerHTML = '';
+            const inputEl = getEl(`qty-input-${productId}`);
+            if (inputEl && Number(inputEl.value) !== qty) inputEl.value = String(qty);
 
-                if (!state.products.length) {
-                    container.innerHTML = '<div class="text-center p-8 text-gray-500 font-bold">لا يوجد بضاعة متاحة حالياً.</div>';
-                    return;
-                }
+            updateSubmitButtonLabel();
 
-                Object.entries(categories).forEach(([catName, products]) => {
-                    const details = document.createElement('details');
-                    details.className = "bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-3";
-                    details.innerHTML = `
-                        <summary class="p-4 font-bold text-lg bg-gray-50 text-gray-800 flex justify-between items-center select-none mobile-touch-target">
-                            ${escapeHtml(catName)} <span class="text-sm font-normal bg-white px-3 py-1 rounded-full text-blue-700 shadow-sm border border-blue-100">${products.length}</span>
-                        </summary>
-                        <div class="p-3 space-y-3 border-t bg-white">
-                            ${products.map(p => `
-                                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm gap-3">
-                                    <div class="flex-1 min-w-0">
-                                        <p class="font-bold text-base text-gray-800 truncate">${escapeHtml(p.name)}</p>
-                                        <p class="text-xs text-gray-500 mt-1">${formatMoney(p.price)} | ضريبة ${safeNumber(p.tax)}%</p>
-                                    </div>
-                                    <div class="flex items-center space-x-2 space-x-reverse bg-gray-50 rounded-lg p-1 border border-gray-200">
-                                        <button onclick="updateQty('${escapeJs(p.id)}', 1)" class="bg-blue-600 text-white w-12 h-10 rounded-md font-bold text-2xl fast-click hover:bg-blue-700 shadow-sm">+</button>
-                                        <span id="qty-${escapeJs(p.id)}" class="w-8 text-center font-bold text-xl text-gray-800">0</span>
-                                        <button onclick="updateQty('${escapeJs(p.id)}', -1)" class="bg-red-500 text-white w-12 h-10 rounded-md font-bold text-2xl fast-click hover:bg-red-600 shadow-sm">-</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                    container.appendChild(details);
-                });
-                updateSubmitButtonLabel();
-            } catch (err) {
-                console.error(err);
-                Swal.fire('خطأ', 'فشل في تحميل قائمة البضاعة', 'error');
+            const activeSearch = safeText(getEl('product-search')?.value, '').trim();
+            if (activeSearch) {
+                renderSupervisorProducts();
             }
         }
 
-        window.updateQty = (id, change) => {
-            const product = state.products.find(p => p.id === id);
-            if (!product) return;
-            product.quantity = Math.max(0, safeQty(product.quantity) + change);
-            const el = getEl(`qty-${id}`);
-            if (el) el.innerText = String(product.quantity);
+        function showOrderPreview() {
+            const itemsWithQty = state.masterProducts
+                .filter(p => safeQty(p.quantity) > 0)
+                .map(p => ({
+                    name: p.name,
+                    unit: p.unit,
+                    quantity: safeQty(p.quantity),
+                    price: p.price,
+                    tax: p.tax,
+                    subtotal: safeQty(p.quantity) * p.price * (1 + p.tax / 100)
+                }));
+
+            if (itemsWithQty.length === 0) {
+                Swal.fire('تنبيه', 'لا توجد أصناف محددة في الطلبية. قم بإضافة كميات أولاً.', 'info');
+                return false;
+            }
+
+            const total = itemsWithQty.reduce((sum, i) => sum + i.subtotal, 0);
+            const note = safeText(getEl('order-note')?.value, '').trim();
+            const special = Boolean(getEl('special-order')?.checked);
+
+            const rows = itemsWithQty.map(item => `
+                <tr>
+                    <td class="p-3 border-b border-slate-200 font-bold text-slate-800">${escapeHtml(item.name)}</td>
+                    <td class="p-3 border-b border-slate-200 text-slate-600">${escapeHtml(item.unit)}</td>
+                    <td class="p-3 border-b border-slate-200 font-bold text-slate-800">${item.quantity}</td>
+                    <td class="p-3 border-b border-slate-200" dir="ltr">${formatMoney(item.price)}</td>
+                    <td class="p-3 border-b border-slate-200 font-bold text-emerald-600" dir="ltr">${formatMoney(item.subtotal)}</td>
+                </tr>
+            `).join('');
+
+            const html = `
+                <div class="text-right max-h-[65vh] overflow-y-auto pr-1">
+                    <div class="soft-panel p-3 mb-4">
+                        <div class="font-bold text-slate-800 mb-1">مراجعة نهائية قبل الإرسال</div>
+                        <div class="text-sm text-slate-500">يمكنك التأكد من الأصناف والكميات ثم إرسال الطلبية مباشرة.</div>
+                    </div>
+                    <div class="overflow-hidden rounded-2xl border border-slate-200">
+                        <table class="w-full text-right bg-white">
+                            <thead class="bg-slate-100 text-slate-700">
+                                <tr>
+                                    <th class="p-3">الصنف</th>
+                                    <th class="p-3">الوحدة</th>
+                                    <th class="p-3">الكمية</th>
+                                    <th class="p-3">السعر</th>
+                                    <th class="p-3">الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                        <div class="soft-panel p-4">
+                            <div class="text-sm text-slate-500">الإجمالي الكلي</div>
+                            <div class="text-2xl font-extrabold text-emerald-600" dir="ltr">${formatMoney(total)}</div>
+                        </div>
+                        <div class="soft-panel p-4">
+                            <div class="text-sm text-slate-500">الحالة</div>
+                            <div class="text-lg font-bold ${special ? 'text-red-600' : 'text-slate-800'}">${special ? 'طلبية خاصة' : 'طلبية عادية'}</div>
+                        </div>
+                    </div>
+                    ${note ? `<div class="soft-panel p-4 mt-4 bg-amber-50 border-amber-100"><div class="text-sm text-amber-700 font-bold mb-1">الملاحظات</div><div class="text-slate-800 whitespace-pre-wrap">${escapeHtml(note)}</div></div>` : ''}
+                </div>
+            `;
+
+            Swal.fire({
+                title: 'معاينة الطلبية',
+                html,
+                width: 920,
+                allowOutsideClick: true,
+                showCancelButton: true,
+                confirmButtonText: 'تأكيد وإرسال الطلبية',
+                cancelButtonText: 'تعديل الطلبية',
+                confirmButtonColor: '#16a34a',
+                cancelButtonColor: '#64748b'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('submit-order-btn').click();
+                }
+            });
+
+            return true;
+        }
+
+        function renderSupervisorProducts() {
+            const container = getEl('products-list-supervisor');
+            if (!container) return;
+
+            const search = normalizeKey(getEl('product-search')?.value || '');
+            const filtered = state.masterProducts.filter(p => {
+                if (!search) return true;
+                const hay = normalizeKey(`${p.name} ${p.unit} ${p.category}`);
+                return hay.includes(search);
+            });
+
+            container.replaceChildren();
+
+            if (!filtered.length) {
+                container.innerHTML = '<div class="empty-state soft-panel">لا توجد أصناف مطابقة للبحث.</div>';
+                updateSubmitButtonLabel();
+                return;
+            }
+
+            const groups = new Map();
+            for (const p of filtered) {
+                const key = safeText(p.category || p.unit, 'أصناف عامة');
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(p);
+            }
+
+            const fragment = document.createDocumentFragment();
+            [...groups.entries()]
+                .sort((a, b) => a[0].localeCompare(b[0], 'ar'))
+                .forEach(([groupName, groupProducts]) => {
+                    const details = document.createElement('details');
+                    details.className = 'soft-card overflow-hidden mb-3';
+                    details.open = Boolean(state.supervisorExpandedGroups[groupName]);
+
+                    const summary = document.createElement('summary');
+                    summary.className = 'p-4 font-bold text-lg bg-white/80 text-slate-800 flex justify-between items-center select-none mobile-touch-target border-b border-slate-100';
+                    summary.innerHTML = `
+                        <span>${escapeHtml(groupName)}</span>
+                        <span class="text-sm font-bold bg-blue-50 px-3 py-1 rounded-full text-blue-700 border border-blue-100">${groupProducts.length}</span>
+                    `;
+
+                    const body = document.createElement('div');
+                    body.className = 'p-3 space-y-3 bg-white/60';
+                    body.innerHTML = groupProducts.map(p => `
+                        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm gap-3 ${safeQty(p.quantity) > 0 ? 'ring-2 ring-emerald-100 bg-emerald-50/40' : ''}">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-bold text-base text-slate-800 truncate">${escapeHtml(p.name)}</p>
+                                <p class="text-xs text-slate-500 mt-1">${escapeHtml(p.unit)}${safeNumber(p.tax) ? ` | ضريبة ${safeNumber(p.tax)}%` : ''}</p>
+                            </div>
+                            <div class="flex items-center gap-2 bg-slate-50 rounded-2xl p-1 border border-slate-200">
+                                <button onclick="adjustQty('${escapeJs(p.id)}', 1)" class="bg-blue-600 text-white w-11 h-10 rounded-xl font-bold text-2xl fast-click hover:bg-blue-700 shadow-sm">+</button>
+                                <input type="number" id="qty-input-${escapeJs(p.id)}" min="0" step="1" inputmode="numeric" value="${safeQty(p.quantity)}" class="w-16 text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-xl p-2" onchange="updateQtyFromInput('${escapeJs(p.id)}', this.value)">
+                                <button onclick="adjustQty('${escapeJs(p.id)}', -1)" class="bg-red-500 text-white w-11 h-10 rounded-xl font-bold text-2xl fast-click hover:bg-red-600 shadow-sm">-</button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    details.append(summary, body);
+                    summary.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        state.supervisorExpandedGroups[groupName] = !state.supervisorExpandedGroups[groupName];
+                        details.open = state.supervisorExpandedGroups[groupName];
+                    });
+
+                    fragment.appendChild(details);
+                });
+
+            container.appendChild(fragment);
             updateSubmitButtonLabel();
+        }
+
+        window.updateQtyFromInput = (id, value) => {
+            updateProductQuantity(id, safeQty(value));
         };
+
+        window.adjustQty = (id, delta) => {
+            const product = state.masterProducts.find(p => p.id === id);
+            if (product) {
+                const newQty = Math.max(0, safeQty(product.quantity) + delta);
+                updateProductQuantity(id, newQty);
+            }
+        };
+
+        async function fetchMasterProductsFromFirestore() {
+            const snap = await getDocs(collection(db, "products"));
+            const products = [];
+            snap.forEach((d, idx) => {
+                products.push(normalizeProduct({ id: d.id, ...d.data() }, idx));
+            });
+            products.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'ar'));
+            return products;
+        }
+
+        async function loadMasterProducts() {
+            try {
+                let products = await fetchMasterProductsFromFirestore();
+                if (!products.length) {
+                    products = FALLBACK_PRODUCTS.map((p, idx) => normalizeProduct(p, idx));
+                }
+                state.masterProducts = products.map(p => ({ ...p, quantity: 0 }));
+                state.masterProductsById = new Map(state.masterProducts.map(p => [p.id, p]));
+                renderSupervisorProducts();
+                return state.masterProducts;
+            } catch (err) {
+                console.error(err);
+                state.masterProducts = FALLBACK_PRODUCTS.map((p, idx) => ({ ...normalizeProduct(p, idx), quantity: 0 }));
+                state.masterProductsById = new Map(state.masterProducts.map(p => [p.id, p]));
+                renderSupervisorProducts();
+                Swal.fire('تنبيه', 'تعذر تحميل الأصناف من قاعدة البيانات، تم استخدام القائمة الثابتة.', 'warning');
+                return state.masterProducts;
+            }
+        }
+
+        window.filterSupervisorProducts = () => renderSupervisorProducts();
+        window.switchAdminTab = (tabId) => setActiveTab(tabId);
+        window.loadPreparerData = () => loadPreparerData();
+        window.loadAdminData = () => loadAdminData();
+        window.sendOrderToWhatsapp = (orderId, mode = 'preparer') => {
+            const order = (state.orders.all || []).find(o => o.id === orderId) || (state.orders.today || []).find(o => o.id === orderId) || (state.orders.archive || []).find(o => o.id === orderId);
+            if (!order) return Swal.fire('تنبيه', 'الطلبية غير موجودة', 'info');
+            const whatsappText = buildWhatsAppText(order, mode);
+            const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
+            window.open(waLink, '_blank');
+        };
+
+
+
+        async function replaceProductsCollection(items) {
+            const existing = await getDocs(collection(db, "products"));
+            if (!existing.empty) {
+                const batchSize = 350;
+                const docs = existing.docs;
+                for (let i = 0; i < docs.length; i += batchSize) {
+                    const batch = writeBatch(db);
+                    docs.slice(i, i + batchSize).forEach(d => batch.delete(d.ref));
+                    await batch.commit();
+                }
+            }
+
+            const batch = writeBatch(db);
+            items.forEach((item, index) => {
+                const normalized = normalizeProduct(item, index);
+                const refId = normalized.id || buildProductId(normalized);
+                batch.set(doc(db, "products", refId), {
+                    name: normalized.name,
+                    unit: normalized.unit,
+                    category: normalized.category,
+                    price: normalized.price,
+                    tax: safeNumber(normalized.tax, 0),
+                    sortOrder: normalized.sortOrder,
+                    active: true
+                }, { merge: true });
+            });
+            await batch.commit();
+        }
 
         document.getElementById('login-btn').addEventListener('click', async () => {
             const email = getEl('email').value.trim();
@@ -581,29 +1117,37 @@
                 if (user) {
                     const userDoc = await getDoc(doc(db, "users", user.uid));
                     if (!userDoc.exists()) {
-                        Swal.fire('تنبيه', 'حسابك مسجل ولكن لا تملك صلاحيات معينة في قاعدة البيانات.', 'error');
+                        Swal.fire('تنبيه', 'حسابك مسجل ولكن لا تملك صلاحيات في قاعدة البيانات.', 'error');
                         await signOut(auth);
                         return;
                     }
 
+                    state.currentUser = user;
                     state.currentUserData = userDoc.data();
+                    state.currentRole = safeText(state.currentUserData.role, '').toLowerCase();
 
                     if (state.ordersUnsubscribe) {
                         state.ordersUnsubscribe();
                         state.ordersUnsubscribe = null;
                     }
 
-                    if (state.currentUserData.role === 'admin') {
+                    if (state.currentRole === 'admin') {
                         showView('admin-view');
                         setActiveTab('tab-today');
                         await loadAdminData();
+                    } else if (['preparer', 'receiver', 'prep', 'preparer-role'].includes(state.currentRole)) {
+                        showView('preparer-view');
+                        await loadPreparerData();
                     } else {
                         showView('supervisor-view');
                         getEl('branch-name-display').innerText = `الفرع الحالي: ${safeText(state.currentUserData.branch, 'غير محدد')}`;
-                        await updateSupervisorProducts();
+                        await loadMasterProducts();
                     }
                 } else {
                     showView('login-view');
+                    state.currentUser = null;
+                    state.currentUserData = null;
+                    state.currentRole = null;
                 }
             } catch (err) {
                 console.error(err);
@@ -612,30 +1156,45 @@
             }
         });
 
+        document.getElementById('product-search')?.addEventListener('input', debounce(updateSupervisorSearch, 120));
+        document.getElementById('preview-order-btn')?.addEventListener('click', showOrderPreview);
+
         getEl('submit-order-btn').addEventListener('click', async () => {
-            const items = state.products.filter(p => safeQty(p.quantity) > 0).map(normalizeItem);
-            if (!items.length) return Swal.fire('تنبيه', 'قم بتحديد الكميات أولاً بالضغط على زر (+)', 'warning');
+            const items = state.masterProducts.filter(p => safeQty(p.quantity) > 0).map(normalizeItem);
+            if (!items.length) return Swal.fire('تنبيه', 'قم بتحديد الكميات أولاً بالضغط على زر (+) أو الإدخال المباشر', 'warning');
 
             const note = getEl('order-note').value.trim();
             const special = getEl('special-order').checked;
-            const orderTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+            const orderTotal = calcOrderTotal(items);
+            const branchName = safeText(state.currentUserData?.branch, 'فرع غير محدد');
 
             const btn = getEl('submit-order-btn');
             const original = btn.innerHTML;
             btn.disabled = true;
+            btn.innerHTML = 'جاري الإرسال...';
 
             try {
-                await addDoc(collection(db, "orders"), {
-                    branch: safeText(state.currentUserData?.branch, 'فرع غير محدد'),
+                const docRef = await addDoc(collection(db, "orders"), {
+                    branch: branchName,
                     items,
+                    originalItems: items,
+                    preparedItems: [],
                     total: orderTotal,
                     note,
                     special,
                     dateStr: todayYMD(),
-                    timestamp: serverTimestamp()
+                    timestamp: serverTimestamp(),
+                    updatedAt: serverTimestamp(),
+                    status: 'submitted',
+                    createdBy: {
+                        uid: state.currentUser?.uid || '',
+                        email: state.currentUser?.email || ''
+                    }
                 });
 
-                const whatsappText = getSupervisorWhatsappText(items, safeText(state.currentUserData?.branch, 'فرع غير محدد'), note, special);
+                await updateDoc(docRef, { orderNo: docRef.id });
+
+                const whatsappText = buildWhatsAppText({ branch: branchName, items, originalItems: items, preparedItems: [], note, special, status: 'submitted' }, 'supervisor');
                 resetSupervisorForm();
 
                 Swal.fire({
@@ -643,6 +1202,7 @@
                     title: 'تم إرسال الطلبية بنجاح',
                     text: 'جاري فتح الواتساب...',
                     timer: 1800,
+                    allowOutsideClick: true,
                     showConfirmButton: false
                 }).then(() => {
                     const waLink = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
@@ -661,38 +1221,46 @@
         async function loadAdminProducts() {
             try {
                 const snap = await getDocs(collection(db, "products"));
-                state.adminProducts = [];
                 const tbody = getEl('admin-products-tbody');
                 if (!tbody) return;
-                tbody.innerHTML = '';
 
-                snap.forEach(d => {
-                    const p = { id: d.id, ...d.data() };
-                    p.name = safeText(p.name, 'صنف غير محدد');
-                    p.category = safeText(p.category, 'أصناف عامة');
-                    p.price = safeNumber(p.price);
-                    p.tax = safeNumber(p.tax);
-                    state.adminProducts.push(p);
-                    tbody.insertAdjacentHTML('beforeend', `
-                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 font-bold text-gray-800">${escapeHtml(p.name)}</td>
-                            <td class="px-4 py-3 text-gray-600">${escapeHtml(p.category)}</td>
-                            <td class="px-4 py-3 text-blue-600 font-bold" dir="ltr">${p.price}</td>
-                            <td class="px-4 py-3 text-gray-600" dir="ltr">${p.tax}%</td>
-                            <td class="px-4 py-3 text-center">
-                                <button onclick="editProduct('${escapeJs(p.id)}')" class="text-white bg-blue-500 hover:bg-blue-600 px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition">تعديل</button>
-                                <button onclick="deleteProduct('${escapeJs(p.id)}')" class="text-white bg-red-500 hover:bg-red-600 px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition mr-1">حذف</button>
-                            </td>
-                        </tr>
-                    `);
+                const rows = [];
+                snap.forEach((d, idx) => {
+                    rows.push(normalizeProduct({ id: d.id, ...d.data() }, idx));
                 });
+
+                rows.sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'ar'));
+                state.adminProducts = rows;
+
+                if (!rows.length) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">لا توجد منتجات حالياً</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = rows.map(p => `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 font-bold text-gray-800">${escapeHtml(p.name)}</td>
+                        <td class="px-4 py-3 text-gray-600">${escapeHtml(p.unit)}</td>
+                        <td class="px-4 py-3 text-gray-600">${escapeHtml(p.category)}</td>
+                        <td class="px-4 py-3 text-blue-600 font-bold" dir="ltr">${formatMoney(p.price)}</td>
+                        <td class="px-4 py-3 text-gray-600" dir="ltr">${safeNumber(p.tax)}%</td>
+                        <td class="px-4 py-3 text-gray-600" dir="ltr">${safeNumber(p.sortOrder)}</td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex justify-center gap-2 flex-wrap">
+                                <button onclick="editProduct('${escapeJs(p.id)}')" class="text-white bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">تعديل</button>
+                                <button onclick="deleteProduct('${escapeJs(p.id)}')" class="text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition">حذف</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+
             } catch (error) {
                 console.error(error);
+                Swal.fire('خطأ', 'تعذر تحميل المنتجات', 'error');
             }
         }
 
-        async function loadAdminData() {
-            await loadAdminProducts();
+        async function subscribeOrders() {
             const ordersRef = collection(db, "orders");
 
             if (state.ordersUnsubscribe) {
@@ -705,41 +1273,92 @@
                 snap.forEach(d => tempOrders.push(normalizeOrder({ id: d.id, ...d.data() })));
 
                 tempOrders.sort((a, b) => {
-                    const timeA = a.timestamp && typeof a.timestamp.toMillis === 'function' ? a.timestamp.toMillis() : (a.timestamp && typeof a.timestamp.seconds === 'number' ? a.timestamp.seconds * 1000 : 0);
-                    const timeB = b.timestamp && typeof b.timestamp.toMillis === 'function' ? b.timestamp.toMillis() : (b.timestamp && typeof b.timestamp.seconds === 'number' ? b.timestamp.seconds * 1000 : 0);
+                    const timeA = a.preparedAt && typeof a.preparedAt.toMillis === 'function'
+                        ? a.preparedAt.toMillis()
+                        : (a.timestamp && typeof a.timestamp.toMillis === 'function' ? a.timestamp.toMillis() : 0);
+                    const timeB = b.preparedAt && typeof b.preparedAt.toMillis === 'function'
+                        ? b.preparedAt.toMillis()
+                        : (b.timestamp && typeof b.timestamp.toMillis === 'function' ? b.timestamp.toMillis() : 0);
                     return timeB - timeA;
                 });
 
                 const todayDate = todayYMD();
+                state.orders.all = tempOrders;
                 state.orders.today = tempOrders.filter(order => extractOrderYMD(order) === todayDate);
                 state.orders.archive = tempOrders.filter(order => extractOrderYMD(order) !== todayDate);
 
-                populateBranchFilterSelects();
-                renderOrdersTable('today-orders-tbody', 'today');
-                renderOrdersTable('archive-orders-tbody', 'archive');
+                scheduleOrdersRender();
             }, (error) => {
                 console.error('Realtime fetching error:', error);
                 Swal.fire('خطأ', 'تعذر تحميل الطلبات من قاعدة البيانات', 'error');
             });
         }
 
+        async function loadAdminData() {
+            await loadAdminProducts();
+            await subscribeOrders();
+        }
+
+        async function loadPreparerData() {
+            await loadMasterProducts();
+            await subscribeOrders();
+            renderPreparerOrdersTable();
+        }
+
+        function renderPreparerOrdersTable() {
+            const tbody = getEl('preparer-orders-tbody');
+            if (!tbody) return;
+            const ordersArray = getFilteredOrders('preparer');
+
+            if (!ordersArray.length) {
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-state">لا يوجد طلبات للتحضير حالياً</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = ordersArray.map(order => {
+                const dateStr = formatDateTime(order.preparedAt || order.timestamp);
+                const items = getFinalOrderItems(order);
+                return `
+                    <tr class="hover:bg-emerald-50 transition border-b border-gray-100">
+                        <td class="px-4 py-4 text-right font-bold text-gray-800 align-top break-words">
+                            <div class="whitespace-normal">${escapeHtml(order.branch)}</div>
+                            <div class="mt-1 flex gap-2 flex-wrap">${getStatusBadge(order.status)}${order.special ? '<span class="text-xs font-bold px-2 py-1 rounded-full border bg-red-50 text-red-700 border-red-100">خاصة</span>' : ''}</div>
+                        </td>
+                        <td class="px-4 py-4 text-right text-gray-500 text-sm align-top break-words" dir="ltr">${escapeHtml(dateStr)}</td>
+                        <td class="px-4 py-4 text-right text-gray-700 font-bold align-top">${items.length} صنف</td>
+                        <td class="px-4 py-4 text-center align-top">
+                            <div class="flex flex-col sm:flex-row justify-center gap-2">
+                                <button onclick="viewOrderDetails('${escapeJs(order.id)}', 'preparer')" class="w-full sm:w-auto bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-100 border border-indigo-100 transition shadow-sm">التفاصيل</button>
+                                <button onclick="openOrderEditor('${escapeJs(order.id)}')" class="w-full sm:w-auto bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 border border-blue-100 transition shadow-sm">تحضير/تعديل</button>
+                                <button onclick="sendOrderToWhatsapp('${escapeJs(order.id)}', 'preparer')" class="w-full sm:w-auto bg-green-50 text-green-700 px-3 py-2 rounded-lg hover:bg-green-100 border border-green-100 transition shadow-sm">واتساب</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         window.applyOrderFilters = (source) => {
-            const prefix = source === 'today' ? 'today' : 'archive';
+            const prefix = source === 'today' ? 'today' : (source === 'archive' ? 'archive' : 'preparer');
             state.filters[source] = {
-                from: getEl(`${prefix}-filter-from`).value,
-                to: getEl(`${prefix}-filter-to`).value,
-                branch: getEl(`${prefix}-filter-branch`).value
+                from: source === 'preparer' ? '' : (getEl(`${prefix}-filter-from`)?.value || ''),
+                to: source === 'preparer' ? '' : (getEl(`${prefix}-filter-to`)?.value || ''),
+                branch: getEl(`${prefix}-filter-branch`)?.value || '',
+                status: source === 'preparer' ? (getEl(`${prefix}-filter-status`)?.value || '') : ''
             };
-            renderOrdersTable(`${source}-orders-tbody`, source);
+            if (source === 'preparer') renderPreparerOrdersTable();
+            else renderOrdersTable(`${source}-orders-tbody`, source);
         };
 
         window.resetOrderFilters = (source) => {
-            const prefix = source === 'today' ? 'today' : 'archive';
-            state.filters[source] = { from: '', to: '', branch: '' };
-            getEl(`${prefix}-filter-from`).value = '';
-            getEl(`${prefix}-filter-to`).value = '';
-            getEl(`${prefix}-filter-branch`).value = '';
-            renderOrdersTable(`${source}-orders-tbody`, source);
+            const prefix = source === 'today' ? 'today' : (source === 'archive' ? 'archive' : 'preparer');
+            state.filters[source] = { from: '', to: '', branch: '', status: '' };
+            ['from', 'to', 'branch', 'status'].forEach(field => {
+                const el = getEl(`${prefix}-filter-${field}`);
+                if (el) el.value = '';
+            });
+            if (source === 'preparer') renderPreparerOrdersTable();
+            else renderOrdersTable(`${source}-orders-tbody`, source);
         };
 
         function getActiveOrdersForExport(source) {
@@ -755,7 +1374,7 @@
         window.exportFilteredOrders = (source) => {
             const orders = getActiveOrdersForExport(source);
             if (!orders.length) return Swal.fire('تنبيه', 'لا توجد نتائج مطابقة للفلتر', 'info');
-            generateExcel(orders, `نتائج_مفلترة_${source === 'today' ? 'اليوم' : 'الأرشيف'}`);
+            generateExcel(orders, `نتائج_مفلترة_${source === 'today' ? 'اليوم' : source}`);
         };
 
         window.exportSpecificBranch = async (source) => {
@@ -767,6 +1386,7 @@
                 title: 'اختر الفرع لإنشاء تقريره الخاص',
                 input: 'select',
                 inputOptions: branches.reduce((acc, b) => ({ ...acc, [b]: b }), {}),
+                allowOutsideClick: true,
                 showCancelButton: true,
                 confirmButtonText: 'تحميل تقرير الفرع',
                 cancelButtonText: 'إلغاء'
@@ -778,6 +1398,15 @@
             }
         };
 
+        function getProductLookupMap() {
+            const map = new Map();
+            state.masterProducts.forEach(p => {
+                map.set(normalizeKey(p.name), p);
+                map.set(normalizeKey(`${p.name} ${p.unit}`), p);
+            });
+            return map;
+        }
+
         function buildWorkbookData(ordersArray) {
             const summary = [
                 ['تقرير الطلبيات'],
@@ -785,41 +1414,131 @@
                 [''],
                 ['رقم الطلب', 'الفرع', 'التاريخ', 'نوع الطلبية', 'عدد الأصناف', 'ملاحظات', 'الإجمالي']
             ];
-            const details = [
-                ['تفاصيل الطلبيات'],
-                ['تم التصدير بتاريخ', new Date().toLocaleString('ar-EG')],
-                [''],
-                ['رقم الطلب', 'الفرع', 'التاريخ', 'الصنف', 'المجموعة', 'الكمية', 'سعر الوحدة', 'الضريبة %', 'المجموع الفرعي', 'نوع الطلبية', 'ملاحظات']
-            ];
-
-            let grandTotal = 0;
+            const details = [];
 
             ordersArray.forEach((order, idx) => {
                 const normalized = normalizeOrder(order);
                 const orderLabel = `#${idx + 1}`;
-                const orderDate = formatDateTime(normalized.timestamp);
+                const orderDate = formatDateTime(normalized.preparedAt || normalized.timestamp);
                 const orderType = normalized.special ? 'خاصة' : 'عادية';
+                const finalItems = getFinalOrderItems(normalized);
 
-                summary.push([orderLabel, normalized.branch, orderDate, orderType, normalized.items.length, normalized.note || '', normalized.total]);
+                summary.push([orderLabel, normalized.branch, orderDate, orderType, finalItems.length, normalized.note || '', normalized.total]);
+                summary.push(['', '', '', '', '', '', '']);
 
-                normalized.items.forEach(item => {
-                    details.push([orderLabel, normalized.branch, orderDate, item.name, item.category, item.quantity, item.price, item.tax, item.subtotal, orderType, normalized.note || '']);
+                details.push([`تفاصيل الطلبية ${orderLabel} - الفرع: ${normalized.branch}`]);
+                details.push([`التاريخ: ${orderDate} | الحالة: ${getStatusLabel(normalized.status)} | رقم الطلب: ${normalized.orderNo || normalized.id || ''}`]);
+                details.push(['الصنف', 'الوحدة', 'السعر الافرادي', 'الكمية', 'المجموع']);
+
+                finalItems.forEach(item => {
+                    details.push([
+                        item.name,
+                        item.unit,
+                        safeNumber(item.price),
+                        safeQty(item.quantity),
+                        safeQty(item.quantity) * safeNumber(item.price) * (1 + safeNumber(item.tax) / 100)
+                    ]);
                 });
 
-                details.push(['', '', '', '', '', '', '', '', '', '', '']);
-                grandTotal += normalized.total;
+                details.push(['', '', '', '', '']);
+                details.push(['', '', '', '', '']);
             });
 
-            summary.push(['', '', '', '', 'المجموع الكلي', '', grandTotal]);
             return { summary, details };
+        }
+
+        function setSheetHeaderStyle(ws, rowNumber, startCol, endCol, fill, fontColor = 'FFFFFF', align = 'center') {
+            for (let c = startCol; c <= endCol; c++) {
+                const cell = ws[XLSX.utils.encode_cell({ r: rowNumber - 1, c: c - 1 })];
+                if (!cell) continue;
+                cell.s = {
+                    fill: { patternType: 'solid', fgColor: { rgb: fill } },
+                    font: { bold: true, color: { rgb: fontColor } },
+                    alignment: { horizontal: align, vertical: 'center', wrapText: true },
+                    border: {
+                        top: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                        bottom: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                        left: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                        right: { style: 'thin', color: { rgb: 'D1D5DB' } }
+                    }
+                };
+            }
+        }
+
+        function setSheetCellStyle(ws, address, style) {
+            if (ws[address]) ws[address].s = style;
         }
 
         function applyBasicSheetFormatting(ws, widths) {
             ws['!cols'] = widths;
-            ws['!autofilter'] = { ref: ws['!ref'] };
+            if (ws['!ref']) ws['!autofilter'] = { ref: ws['!ref'] };
+        }
+
+
+        function ensureSheetRange(ws) {
+            if (!ws || !ws['!ref']) return;
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            Object.keys(ws).forEach((address) => {
+                if (address.startsWith('!')) return;
+                const cell = XLSX.utils.decode_cell(address);
+                if (cell.r < range.s.r) range.s.r = cell.r;
+                if (cell.c < range.s.c) range.s.c = cell.c;
+                if (cell.r > range.e.r) range.e.r = cell.r;
+                if (cell.c > range.e.c) range.e.c = cell.c;
+            });
+            ws['!ref'] = XLSX.utils.encode_range(range);
+        }
+
+        function safeWorkbookFilename(fileName) {
+            return `${safeText(fileName, 'تقرير_الطلبيات')
+                .replace(/[\\/:*?"<>|]+/g, '_')
+                .replace(/\s+/g, '_')
+                .trim() || 'تقرير_الطلبيات'}.xlsx`;
+        }
+
+        function safeWriteWorkbook(workbook, fileName) {
+            if (!window.XLSX || !XLSX.utils) {
+                throw new Error('مكتبة Excel غير متاحة في المتصفح');
+            }
+
+            const outputName = safeWorkbookFilename(fileName);
+
+            try {
+                if (typeof XLSX.writeFile === 'function') {
+                    XLSX.writeFile(workbook, outputName);
+                    return;
+                }
+            } catch (error) {
+                console.warn('XLSX.writeFile failed, trying fallback download:', error);
+            }
+
+            const arrayBuffer = XLSX.write(workbook, {
+                bookType: 'xlsx',
+                type: 'array',
+                cellStyles: true
+            });
+
+            const blob = new Blob([arrayBuffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = outputName;
+            link.rel = 'noopener';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         function generateExcel(ordersArray, fileName) {
+            if (!state.masterProducts.length) {
+                state.masterProducts = FALLBACK_PRODUCTS.map((p, idx) => ({ ...normalizeProduct(p, idx), quantity: 0 }));
+            }
+
             const workbook = XLSX.utils.book_new();
             const { summary, details } = buildWorkbookData(ordersArray);
 
@@ -827,26 +1546,145 @@
             const wsDetails = XLSX.utils.aoa_to_sheet(details);
 
             wsSummary['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }];
-            wsDetails['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 10 } }];
+            wsDetails['!merges'] = [];
 
             applyBasicSheetFormatting(wsSummary, [
-                { wch: 12 }, { wch: 20 }, { wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 28 }, { wch: 16 }
+                { wch: 14 }, { wch: 22 }, { wch: 22 }, { wch: 14 }, { wch: 12 }, { wch: 30 }, { wch: 16 }
             ]);
-
             applyBasicSheetFormatting(wsDetails, [
-                { wch: 12 }, { wch: 18 }, { wch: 22 }, { wch: 24 }, { wch: 18 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 12 }, { wch: 28 }
+                { wch: 34 }, { wch: 18 }, { wch: 12 }, { wch: 10 }, { wch: 14 }
             ]);
 
+            setSheetHeaderStyle(wsSummary, 1, 1, 7, '1D4ED8');
+            setSheetHeaderStyle(wsSummary, 4, 1, 7, 'E5E7EB', '111827');
+
+            for (let r = 1; r <= summary.length; r++) {
+                for (let c = 1; c <= 7; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: r - 1, c: c - 1 });
+                    if (!wsSummary[addr]) continue;
+                    wsSummary[addr].s = wsSummary[addr].s || {
+                        alignment: { horizontal: c === 1 ? 'center' : 'right', vertical: 'center', wrapText: true }
+                    };
+                    if (r === 1) {
+                        wsSummary[addr].s = {
+                            fill: { patternType: 'solid', fgColor: { rgb: '1D4ED8' } },
+                            font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 14 },
+                            alignment: { horizontal: 'center', vertical: 'center' }
+                        };
+                    } else if (r === 4) {
+                        wsSummary[addr].s = {
+                            fill: { patternType: 'solid', fgColor: { rgb: 'E5E7EB' } },
+                            font: { bold: true, color: { rgb: '111827' } },
+                            alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                            border: {
+                                top: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                                bottom: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                                left: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                                right: { style: 'thin', color: { rgb: 'D1D5DB' } }
+                            }
+                        };
+                    }
+                }
+            }
+
+            let row = 1;
+            ordersArray.forEach((order) => {
+                const normalized = normalizeOrder(order);
+                const finalItems = getFinalOrderItems(normalized);
+
+                for (let c = 1; c <= 5; c++) {
+                    const addr = XLSX.utils.encode_cell({ r: row - 1, c: c - 1 });
+                    if (wsDetails[addr]) {
+                        wsDetails[addr].s = {
+                            fill: { patternType: 'solid', fgColor: { rgb: '0F172A' } },
+                            font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 13 },
+                            alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+                        };
+                    }
+                }
+
+                wsDetails[`A${row}`] = wsDetails[`A${row}`] || { v: `تفاصيل الطلبية - الفرع: ${normalized.branch}`, t: 's' };
+                wsDetails[`A${row}`].s = {
+                    fill: { patternType: 'solid', fgColor: { rgb: '0F172A' } },
+                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 13 },
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+                };
+                wsDetails['!merges'].push({ s: { r: row - 1, c: 0 }, e: { r: row - 1, c: 4 } });
+                row += 1;
+
+                const meta = `التاريخ: ${formatDateTime(normalized.preparedAt || normalized.timestamp)} | الحالة: ${getStatusLabel(normalized.status)} | رقم الطلب: ${normalized.orderNo || normalized.id || ''}`;
+                wsDetails[`A${row}`] = { v: meta, t: 's' };
+                wsDetails[`A${row}`].s = {
+                    fill: { patternType: 'solid', fgColor: { rgb: 'DBEAFE' } },
+                    font: { bold: true, color: { rgb: '1E3A8A' } },
+                    alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
+                };
+                wsDetails['!merges'].push({ s: { r: row - 1, c: 0 }, e: { r: row - 1, c: 4 } });
+                row += 1;
+
+                const headers = ['الصنف', 'الوحدة', 'السعر الافرادي', 'الكمية', 'المجموع'];
+                headers.forEach((h, i) => {
+                    const addr = XLSX.utils.encode_cell({ r: row - 1, c: i });
+                    wsDetails[addr] = wsDetails[addr] || { v: h, t: 's' };
+                    wsDetails[addr].s = {
+                        fill: { patternType: 'solid', fgColor: { rgb: 'E5E7EB' } },
+                        font: { bold: true, color: { rgb: '111827' } },
+                        alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                        border: {
+                            top: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                            bottom: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                            left: { style: 'thin', color: { rgb: 'D1D5DB' } },
+                            right: { style: 'thin', color: { rgb: 'D1D5DB' } }
+                        }
+                    };
+                });
+                row += 1;
+
+                finalItems.forEach(item => {
+                    const values = [item.name, item.unit, safeNumber(item.price), safeQty(item.quantity), safeQty(item.quantity) * safeNumber(item.price) * (1 + safeNumber(item.tax) / 100)];
+                    values.forEach((value, i) => {
+                        const addr = XLSX.utils.encode_cell({ r: row - 1, c: i });
+                        wsDetails[addr] = wsDetails[addr] || { v: value };
+                        wsDetails[addr].v = value;
+                        wsDetails[addr].t = i < 2 ? 's' : 'n';
+                        wsDetails[addr].s = {
+                            fill: { patternType: 'solid', fgColor: { rgb: safeQty(item.quantity) > 0 ? 'ECFDF5' : 'F9FAFB' } },
+                            font: {
+                                bold: safeQty(item.quantity) > 0 && i === 0,
+                                color: { rgb: safeQty(item.quantity) > 0 ? '065F46' : '6B7280' }
+                            },
+                            alignment: { horizontal: i === 0 ? 'right' : 'center', vertical: 'center', wrapText: true },
+                            border: {
+                                top: { style: 'thin', color: { rgb: 'E5E7EB' } },
+                                bottom: { style: 'thin', color: { rgb: 'E5E7EB' } },
+                                left: { style: 'thin', color: { rgb: 'E5E7EB' } },
+                                right: { style: 'thin', color: { rgb: 'E5E7EB' } }
+                            },
+                            numFmt: i >= 2 ? '#,##0.00' : 'General'
+                        };
+                    });
+                    row += 1;
+                });
+
+                row += 2;
+            });
+
+            ensureSheetRange(wsSummary);
+            ensureSheetRange(wsDetails);
             XLSX.utils.book_append_sheet(workbook, wsSummary, "الملخص");
-            XLSX.utils.book_append_sheet(workbook, wsDetails, "التفاصيل");
-            XLSX.writeFile(workbook, `${fileName.replace(/\s+/g, '_')}.xlsx`);
+            XLSX.utils.book_append_sheet(workbook, wsDetails, "التفاصيل المحاسبية");
+            safeWriteWorkbook(workbook, fileName);
         }
 
         window.viewOrderDetails = (orderId, source) => {
-            const order = (state.orders[source] || []).find(o => o.id === orderId);
+            const list = source === 'preparer' ? state.orders.all : (state.orders[source] || []);
+            const order = list.find(o => o.id === orderId);
             if (!order) return;
 
             const normalized = normalizeOrder(order);
+            const items = getFinalOrderItems(normalized);
+            const showMoney = source !== 'preparer';
+
             let itemsHtml = `
                 <div class="space-y-3 text-right">
                     <div class="p-3 rounded-xl bg-gray-50 border border-gray-200">
@@ -855,41 +1693,201 @@
                     </div>
                     <div class="p-3 rounded-xl bg-gray-50 border border-gray-200">
                         <div class="text-sm text-gray-500">التاريخ</div>
-                        <div class="font-bold text-gray-800" dir="ltr">${escapeHtml(formatDateTime(normalized.timestamp))}</div>
+                        <div class="font-bold text-gray-800" dir="ltr">${escapeHtml(formatDateTime(normalized.preparedAt || normalized.timestamp))}</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                        <div class="text-sm text-gray-500">الحالة</div>
+                        <div class="font-bold text-gray-800">${getStatusLabel(normalized.status)}</div>
                     </div>
                     ${normalized.special ? '<div class="p-3 rounded-xl bg-red-50 border border-red-100 text-red-700 font-bold">هذه طلبية خاصة</div>' : ''}
-                    ${normalized.note ? `<div class="p-3 rounded-xl bg-amber-50 border border-amber-100"><div class="text-sm text-amber-700 mb-1 font-bold">الملاحظات</div><div class="text-gray-800 whitespace-pre-wrap">${escapeHtml(normalized.note)}</div></div>` : ''}
-                    <div class="max-h-64 overflow-y-auto mt-2">
+                    ${normalized.note ? `<div class="p-3 rounded-xl bg-amber-50 border border-amber-100"><div class="text-sm text-amber-700 mb-1 font-bold">الطلبات الجانبية / الملاحظات</div><div class="text-gray-800 whitespace-pre-wrap">${escapeHtml(normalized.note)}</div></div>` : ''}
+                    <div class="max-h-72 overflow-y-auto mt-2">
                         <table class="w-full text-right border text-sm">
                             <tr class="bg-gray-100">
                                 <th class="p-2 border">الصنف</th>
+                                <th class="p-2 border">الوحدة</th>
                                 <th class="p-2 border">الكمية</th>
-                                <th class="p-2 border">المجموعة</th>
                             </tr>`;
 
-            normalized.items.forEach(i => {
-                itemsHtml += `<tr><td class="p-2 border font-bold text-gray-700">${escapeHtml(i.name)}</td><td class="p-2 border font-bold text-blue-600">${i.quantity}</td><td class="p-2 border text-gray-600">${escapeHtml(i.category)}</td></tr>`;
+            items.forEach(i => {
+                itemsHtml += `<tr><td class="p-2 border font-bold text-gray-700">${escapeHtml(i.name)}</td><td class="p-2 border text-gray-600">${escapeHtml(i.unit)}</td><td class="p-2 border font-bold text-blue-600">${i.quantity}</td></tr>`;
             });
 
-            itemsHtml += `</table></div><div class="p-3 rounded-xl bg-green-50 border border-green-100 font-bold text-green-700">الإجمالي: ${formatMoney(normalized.total)}</div></div>`;
+            itemsHtml += `</table></div>${showMoney ? `<div class="p-3 rounded-xl bg-green-50 border border-green-100 font-bold text-green-700">الإجمالي: ${formatMoney(normalized.total)}</div>` : ''}</div>`;
 
             Swal.fire({
                 title: `طلبية فرع: ${escapeHtml(normalized.branch)}`,
                 html: itemsHtml,
+                allowOutsideClick: true,
                 showCancelButton: true,
                 confirmButtonText: 'تنزيل الإكسل',
-                cancelButtonText: 'إغلاق',
+                cancelButtonText: canEditOrders() ? 'تعديل الطلبية' : 'إغلاق',
                 confirmButtonColor: '#16a34a',
-                width: 850
+                cancelButtonColor: canEditOrders() ? '#2563eb' : '#6b7280',
+                width: 900
             }).then((res) => {
                 if (res.isConfirmed) generateExcel([normalized], `طلبية_فرع_${normalized.branch}`);
+                else if (res.dismiss === Swal.DismissReason.cancel && canEditOrders()) openOrderEditor(orderId);
             });
         };
 
-        let adminProductsArray = [];
+        window.adjustPrepQty = (id, delta) => {
+            const actualId = String(id || '').startsWith('prep-qty-') ? String(id) : `prep-qty-${id}`;
+            const input = getEl(actualId);
+            if (!input) return;
+            const next = Math.max(0, safeQty(input.value) + delta);
+            input.value = String(next);
+            updatePrepDialogSummary();
+        };
+
+        window.updatePrepDialogSummary = () => updatePrepDialogSummary();
+
+        function updatePrepDialogSummary() {
+            const rows = document.querySelectorAll('[data-prep-row]');
+            let itemRows = 0;
+            let totalQty = 0;
+            rows.forEach(row => {
+                const qty = safeQty(row.querySelector('input[type="number"]')?.value);
+                if (qty > 0) itemRows += 1;
+                totalQty += qty;
+            });
+            const countEl = getEl('prep-count-preview');
+            const qtyEl = getEl('prep-qty-preview');
+            if (countEl) countEl.innerText = `${itemRows} أصناف`;
+            if (qtyEl) qtyEl.innerText = `${totalQty} قطعة`;
+        }
+
+        function buildAdjustments(originalItems, updatedItems) {
+            const originalMap = new Map(originalItems.map(item => [normalizeKey(item.name), safeQty(item.quantity)]));
+            const deltas = [];
+            updatedItems.forEach(item => {
+                const oldQty = safeQty(originalMap.get(normalizeKey(item.name)) || 0);
+                const newQty = safeQty(item.quantity);
+                if (oldQty !== newQty) {
+                    deltas.push({
+                        name: item.name,
+                        unit: item.unit,
+                        oldQty,
+                        newQty,
+                        delta: newQty - oldQty
+                    });
+                }
+            });
+            return deltas;
+        }
+
+        window.openOrderEditor = async (orderId) => {
+            const order = (state.orders.all || []).find(o => o.id === orderId) || (state.orders.today || []).find(o => o.id === orderId) || (state.orders.archive || []).find(o => o.id === orderId);
+            if (!order) return Swal.fire('تنبيه', 'الطلبية غير موجودة', 'info');
+
+            const normalized = normalizeOrder(order);
+            const baseItems = (normalized.items && normalized.items.length) ? normalized.items : normalized.originalItems;
+            if (!baseItems.length) return Swal.fire('تنبيه', 'لا توجد أصناف داخل هذه الطلبية', 'warning');
+
+            const rowsHtml = baseItems.map((item, idx) => `
+                <div class="border rounded-xl p-3 bg-white shadow-sm" data-prep-row data-name="${escapeHtml(item.name)}" data-unit="${escapeHtml(item.unit)}" data-price="${safeNumber(item.price)}" data-tax="${safeNumber(item.tax)}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1">
+                            <div class="font-bold text-gray-800">${escapeHtml(item.name)}</div>
+                            <div class="text-xs text-gray-500 mt-1">${escapeHtml(item.unit)} • الأصلي: ${safeQty(item.quantity)}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" class="w-10 h-10 rounded-lg bg-red-500 text-white font-bold text-xl" onclick="adjustPrepQty('prep-qty-${idx}', -1)">-</button>
+                            <input id="prep-qty-${idx}" type="number" min="0" value="${safeQty(item.quantity)}" class="w-20 text-center border rounded-lg p-2 font-bold" oninput="updatePrepDialogSummary()">
+                            <button type="button" class="w-10 h-10 rounded-lg bg-blue-600 text-white font-bold text-xl" onclick="adjustPrepQty('prep-qty-${idx}', 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            const { isConfirmed } = await Swal.fire({
+                title: `تحضير/تعديل الطلبية - ${escapeHtml(normalized.branch)}`,
+                html: `
+                    <div class="text-right space-y-4">
+                        <div class="p-3 rounded-xl bg-gray-50 border border-gray-200">
+                            <div class="font-bold text-gray-800">يمكنك تعديل الكميات فقط دون إعادة كتابة الطلبية كاملة.</div>
+                            <div class="text-sm text-gray-500 mt-1">الفرع: ${escapeHtml(normalized.branch)} • الحالة الحالية: ${getStatusLabel(normalized.status)}</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="p-3 rounded-xl bg-blue-50 border border-blue-100">
+                                <div class="text-xs text-blue-700">عدد الأصناف المعدلة</div>
+                                <div class="text-lg font-bold text-blue-900" id="prep-count-preview">0 أصناف</div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                                <div class="text-xs text-emerald-700">إجمالي الكميات</div>
+                                <div class="text-lg font-bold text-emerald-900" id="prep-qty-preview">0 قطعة</div>
+                            </div>
+                        </div>
+                        <div class="max-h-[55vh] overflow-y-auto space-y-3 pr-1">
+                            ${rowsHtml}
+                        </div>
+                    </div>
+                `,
+                width: 950,
+                allowOutsideClick: true,
+                showCancelButton: true,
+                confirmButtonText: 'حفظ التعديل',
+                cancelButtonText: 'إغلاق',
+                confirmButtonColor: '#2563eb',
+                didOpen: () => updatePrepDialogSummary(),
+                preConfirm: () => {
+                    const updatedItems = baseItems.map((item, idx) => {
+                        const qty = safeQty(getEl(`prep-qty-${idx}`)?.value);
+                        return {
+                            ...item,
+                            quantity: qty,
+                            subtotal: qty * safeNumber(item.price) * (1 + safeNumber(item.tax) / 100)
+                        };
+                    }).filter(item => item.quantity > 0);
+
+                    if (!updatedItems.length) {
+                        Swal.showValidationMessage('لا يمكن حفظ طلبية فارغة');
+                        return false;
+                    }
+
+                    return updatedItems;
+                }
+            });
+
+            if (!isConfirmed) return;
+
+            const updatedItems = baseItems.map((item, idx) => {
+                const qty = safeQty(getEl(`prep-qty-${idx}`)?.value);
+                return {
+                    ...item,
+                    quantity: qty,
+                    subtotal: qty * safeNumber(item.price) * (1 + safeNumber(item.tax) / 100)
+                };
+            }).filter(item => item.quantity > 0);
+
+            const total = calcOrderTotal(updatedItems);
+            const adjustments = buildAdjustments(baseItems, updatedItems);
+
+            try {
+                await updateDoc(doc(db, "orders", order.id), {
+                    items: updatedItems,
+                    preparedItems: updatedItems,
+                    total,
+                    status: 'prepared',
+                    adjustments,
+                    preparedBy: {
+                        uid: state.currentUser?.uid || '',
+                        email: state.currentUser?.email || '',
+                        name: state.currentUserData?.displayName || state.currentUserData?.name || ''
+                    },
+                    preparedAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+
+                Swal.fire('تم الحفظ', 'تم حفظ التعديل في الطلبية وتحديث البيانات بنجاح', 'success');
+            } catch (err) {
+                console.error(err);
+                Swal.fire('خطأ', 'تعذر حفظ التعديل على الطلبية', 'error');
+            }
+        };
 
         window.editProduct = async (id) => {
-            const p = adminProductsArray.find(x => x.id === id);
+            const p = state.adminProducts.find(x => x.id === id);
             if (!p) return Swal.fire('تنبيه', 'المنتج غير موجود', 'info');
 
             const { value: formValues } = await Swal.fire({
@@ -901,31 +1899,42 @@
                             <input id="swal-name" class="w-full border rounded-lg p-2" value="${escapeHtml(p.name)}">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">المجموعة (التصنيف)</label>
-                            <input id="swal-cat" class="w-full border rounded-lg p-2" value="${escapeHtml(p.category)}">
+                            <label class="block text-sm font-bold text-gray-700 mb-1">الوحدة</label>
+                            <input id="swal-unit" class="w-full border rounded-lg p-2" value="${escapeHtml(p.unit)}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">المجموعة / التصنيف</label>
+                            <input id="swal-category" class="w-full border rounded-lg p-2" value="${escapeHtml(p.category || p.unit)}">
                         </div>
                         <div class="flex gap-4">
                             <div class="w-1/2">
                                 <label class="block text-sm font-bold text-gray-700 mb-1">السعر (د.ا)</label>
-                                <input id="swal-price" type="number" step="0.01" class="w-full border rounded-lg p-2" value="${p.price}">
+                                <input id="swal-price" type="number" step="0.01" class="w-full border rounded-lg p-2" value="${safeNumber(p.price)}">
                             </div>
                             <div class="w-1/2">
                                 <label class="block text-sm font-bold text-gray-700 mb-1">الضريبة (%)</label>
-                                <input id="swal-tax" type="number" class="w-full border rounded-lg p-2" value="${p.tax}">
+                                <input id="swal-tax" type="number" class="w-full border rounded-lg p-2" value="${safeNumber(p.tax)}">
                             </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">الترتيب</label>
+                            <input id="swal-order" type="number" class="w-full border rounded-lg p-2" value="${safeNumber(p.sortOrder, 0)}">
                         </div>
                     </div>
                 `,
                 focusConfirm: false,
+                allowOutsideClick: true,
                 showCancelButton: true,
                 confirmButtonText: 'حفظ التعديل',
                 cancelButtonText: 'إلغاء',
                 confirmButtonColor: '#2563eb',
                 preConfirm: () => ({
                     name: getEl('swal-name').value.trim(),
-                    category: getEl('swal-cat').value.trim() || 'عام',
+                    unit: getEl('swal-unit').value.trim() || 'حبة',
+                    category: getEl('swal-category').value.trim() || getEl('swal-unit').value.trim() || 'حبة',
                     price: safeNumber(getEl('swal-price').value),
-                    tax: safeNumber(getEl('swal-tax').value)
+                    tax: safeNumber(getEl('swal-tax').value),
+                    sortOrder: safeNumber(getEl('swal-order').value)
                 })
             });
 
@@ -933,14 +1942,26 @@
                 await updateDoc(doc(db, "products", id), formValues);
                 Swal.fire('تم الحفظ', 'تم تحديث بيانات المنتج بنجاح', 'success');
                 loadAdminProducts();
+                loadMasterProducts();
             }
         };
 
         window.deleteProduct = async (id) => {
-            if (confirm('هل أنت متأكد تماماً من حذف هذا المنتج؟')) {
-                await deleteDoc(doc(db, "products", id));
-                loadAdminProducts();
-            }
+            const confirmed = await Swal.fire({
+                title: 'هل تريد حذف هذا المنتج؟',
+                text: 'سيتم حذف المنتج من قاعدة البيانات نهائياً.',
+                icon: 'warning',
+                allowOutsideClick: true,
+                showCancelButton: true,
+                confirmButtonText: 'نعم، حذف',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#ef4444'
+            });
+            if (!confirmed.isConfirmed) return;
+            await deleteDoc(doc(db, "products", id));
+            Swal.fire('تم الحذف', 'تم حذف المنتج بنجاح', 'success');
+            loadAdminProducts();
+            loadMasterProducts();
         };
 
         document.getElementById('import-btn').addEventListener('click', () => {
@@ -953,33 +1974,50 @@
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
-                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
                     if (!jsonData.length) {
                         Swal.fire('تنبيه', 'ملف الإكسل فارغ', 'warning');
                         return;
                     }
 
-                    Swal.fire({ title: 'جاري استيراد المنتجات...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    const normalized = jsonData.map((item, index) => {
+                        const name = safeText(item['الصنف'] || item['الاسم'] || item['name']);
+                        const unit = safeText(item['الوحدة'] || item['unit'] || item['القياس'] || '');
+                        const category = safeText(item['المجموعة'] || item['الفئة'] || item['التصنيف'] || item['group'] || item['category'] || unit || 'أصناف عامة');
+                        const price = safeNumber(item['السعر الافرادي'] ?? item['السعر'] ?? item['price'], NaN);
+                        const tax = safeNumber(item['الضريبة'] ?? item['tax'] ?? 0, 0);
+                        const sortOrder = safeNumber(item['الترتيب'] ?? item['order'] ?? item['sortOrder'], index + 1);
+                        return { name, unit: unit || 'حبة', category, price, tax, sortOrder };
+                    }).filter(item => item.name && Number.isFinite(item.price));
 
-                    for (const item of jsonData) {
-                        const name = safeText(item['الاسم']);
-                        const price = safeNumber(item['السعر'], NaN);
-                        if (!name || !Number.isFinite(price)) continue;
-                        await addDoc(collection(db, "products"), {
-                            name,
-                            price,
-                            tax: safeNumber(item['الضريبة'], 0),
-                            category: safeText(item['التصنيف'], 'أصناف عامة')
-                        });
+                    if (!normalized.length) {
+                        Swal.fire('تنبيه', 'لم يتم العثور على أصناف صالحة داخل الملف', 'warning');
+                        return;
                     }
 
-                    Swal.fire('نجاح', 'تم استيراد المنتجات للقاعدة بنجاح', 'success');
+                    const { isConfirmed } = await Swal.fire({
+                        title: 'استبدال قائمة المنتجات الحالية؟',
+                        text: 'سيتم حذف المنتجات الحالية من قاعدة البيانات ثم رفع القائمة الجديدة من ملف الإكسل.',
+                        icon: 'warning',
+                        allowOutsideClick: true,
+                        showCancelButton: true,
+                        confirmButtonText: 'نعم، استبدال',
+                        cancelButtonText: 'إلغاء'
+                    });
+
+                    if (!isConfirmed) return;
+
+                    Swal.fire({ title: 'جاري استيراد المنتجات...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    await replaceProductsCollection(normalized);
+                    Swal.fire('نجاح', 'تم استيراد المنتجات وتحديث قاعدة البيانات بنجاح', 'success');
                     loadAdminProducts();
+                    loadMasterProducts();
                     fileInput.value = '';
                 } catch (err) {
                     console.error(err);
-                    Swal.fire('خطأ', 'تأكد من أن ملف الإكسل يحتوي على الأعمدة: الاسم، السعر، التصنيف، الضريبة', 'error');
+                    Swal.fire('خطأ', 'تأكد من أن ملف الإكسل يحتوي على الأعمدة المناسبة', 'error');
                 }
             };
             reader.readAsArrayBuffer(fileInput.files[0]);
